@@ -1,0 +1,24 @@
+{
+    "name": "in10/api-gateway-drupal",
+    "description": "API gateway package for use with a Drupal CMS",
+    "authors": [
+        {
+            "name": "Stephan de Bruin",
+            "email": "stephan.de.bruin@in10.nl"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "IN10\\StadspasApiGatewayDrupal\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "IN10\\ApiGatewayDrupal\\ApiGatewayDrupalServiceProvider"
+            ]
+        }
+    }
+}
