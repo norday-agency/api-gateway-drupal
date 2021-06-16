@@ -4,6 +4,12 @@ This package gives you the connection with a Drupal CMS. The package can be used
 ## Installation
 There are a few steps to go through to be able to use everything this package has to offer.
 
+* Add the following line (including all the locales you require to your `config/app.php` file:
+
+```
+'supported_locales' => ['en'],
+``` 
+
 * Add the following to your projects composer file
 
 ```

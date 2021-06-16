@@ -13,20 +13,20 @@ Route::group(
     ],
     function () {
         // Forms
-        Route::post('form/{id}', 'Admin\ApiController@handleForm');
+        Route::post('form/{id}', 'IN10\ApiGatewayDrupal\Controllers\ApiController@handleForm');
 
         // Menu routes
-        Route::get('menu/{type}', 'Admin\ApiController@getMenu')->where('type', '.*');
+        Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\ApiController@getMenu')->where('type', '.*');
 
         // Homepage
-        Route::get('/homepage', 'Admin\ApiController@getHomepage');
+        Route::get('/homepage', 'IN10\ApiGatewayDrupal\Controllers\ApiController@getHomepage');
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
             foreach (array_keys(config('admin.types')) as $type) {
                 Route::prefix(trans("routes.{$type}", [], $language))->group(
                     function () use ($type) {
-                        Route::get('{slug?}', 'Admin\ApiController@getContentType')->name($type)->where('slug', '.*');
+                        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name($type)->where('slug', '.*');
                     }
                 );
             }
