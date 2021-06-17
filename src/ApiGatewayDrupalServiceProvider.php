@@ -24,18 +24,7 @@ class ApiGatewayDrupalServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Route::bind(
-            'source',
-            function ($name) {
-                $prefix = ['website', 'app', 'gpass', 'unittest'];
-                if (!in_array($name, $prefix)) {
-                    //handle wrong prefixes
-                    throw new Exception('API source not allowed');
-                }
-            }
-        );
-
-        $this->loadRoutesFrom(__DIR__ . '/routes/api.php');
+        $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
         $this->publishes(
             [
                 __DIR__ . '/config/cms.php' => config_path('cms.php'),

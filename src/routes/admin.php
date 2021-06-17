@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group([
     'middleware' => ['api'],
-    'prefix' => 'api/v1.0',
+    'prefix' => 'admin/v1.0',
 ], function () {
-    require 'api_v1.0.php';
+    require 'admin_v1.0.php';
 });

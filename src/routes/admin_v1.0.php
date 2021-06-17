@@ -1,10 +1,10 @@
 <?php
 
 // Sitemap
-Route::get('/sitemap', 'Admin\ApiController@getSitemap');
+Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap');
 
 // Clear cache
-Route::post('cache/invalidate', 'Admin\CacheController@invalidate');
+Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
 
 Route::group(
     [
@@ -13,13 +13,13 @@ Route::group(
     ],
     function () {
         // Forms
-        Route::post('form/{id}', 'IN10\ApiGatewayDrupal\Controllers\ApiController@handleForm');
+        Route::post('form/{id}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@handleForm');
 
         // Menu routes
-        Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\ApiController@getMenu')->where('type', '.*');
+        Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getMenu')->where('type', '.*');
 
         // Homepage
-        Route::get('/homepage', 'IN10\ApiGatewayDrupal\Controllers\ApiController@getHomepage');
+        Route::get('/homepage', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getHomepage');
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
@@ -33,6 +33,6 @@ Route::group(
         }
 
         // Default page routes
-        Route::get('{slug?}', 'Admin\ApiController@getContentType')->name('pages')->where('slug', '.*');
+        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name('pages')->where('slug', '.*');
     }
 );
