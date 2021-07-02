@@ -154,10 +154,6 @@ class DataService
 
         if ($slug) { // show content-type based on slug
             $path = '/' . $slug;
-            if ($type !== 'pages') {
-                $path = '/' . trans("routes.{$type}") . $path;
-            }
-
             $query['filter']['field_path'] = [
                 'value' => $path,
             ];
