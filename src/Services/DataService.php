@@ -15,7 +15,11 @@ use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
 class DataService
 {
-    public static function getParagraphType(Request $api_request, string $locale, string $id)//: ?AnonymousResourceCollection
+    public static function getParagraphType(
+        Request $api_request,
+        string $locale,
+        string $id
+    )//: ?AnonymousResourceCollection
     {
         // $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
         // $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
@@ -23,20 +27,25 @@ class DataService
         $query = [
             'filter' => [
                 'langcode' => [
-                    'value' => $locale, // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+                    'value' => $locale,
+                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                 ],
             ],
         ];
 
         $query = http_build_query($query);
 
-        $request_url = new Uri(config('cms.url') . '/' . $locale . config('cms.endpoint') . '/paragraph/component_form/' . $id . '?' . $query);
+        $request_url = new Uri(
+            config('cms.url') . '/' . $locale . config(
+                'cms.endpoint'
+            ) . '/paragraph/component_form/' . $id . '?' . $query
+        );
 
         $request = new OutgoingRequest('GET', $request_url);
         $request = $request
-                ->withProtocolVersion('1.1')
-                ->withHeader('Accept', 'application/vnd.api+json')
-                ->withHeader('Content-Type', 'application/vnd.api+json');
+            ->withProtocolVersion('1.1')
+            ->withHeader('Accept', 'application/vnd.api+json')
+            ->withHeader('Content-Type', 'application/vnd.api+json');
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
@@ -78,40 +87,48 @@ class DataService
     public static function getMenu(Request $api_request, string $locale, string $type): JsonResponse
     {
         $cache_id = hash('sha256', "{$locale}.menu.{$type}");
-        $data = CacheContent::remember($cache_id, function () use ($locale, $type) {
-            $client = new GuzzleClient();
+        $data = CacheContent::remember(
+            $cache_id,
+            function () use ($locale, $type) {
+                $client = new GuzzleClient();
 
-            $request = [
-                'headers' => [
-                    'Accept' => 'application/hal+json',
-                    'Content-Type' => 'application/hal+json',
-                ],
-            ];
+                $request = [
+                    'headers' => [
+                        'Accept' => 'application/hal+json',
+                        'Content-Type' => 'application/hal+json',
+                    ],
+                ];
 
-            $request_url = new Uri(config('cms.url') . '/' . $locale . config('cms.endpoint') . '/menu_items/' . $type . '?locale=' . $locale);
+                $request_url = new Uri(
+                    config('cms.url') . '/' . $locale . config(
+                        'cms.endpoint'
+                    ) . '/menu_items/' . $type . '?locale=' . $locale
+                );
 
-            $response = $client->request('GET', $request_url, $request);
+                $response = $client->request('GET', $request_url, $request);
 
-            if ($response->getStatusCode() == 200) {
-                $result = json_decode((string) $response->getBody());
+                if ($response->getStatusCode() == 200) {
+                    $result = json_decode((string)$response->getBody());
 
-                if (empty($result)) {
-                    $data['statusCode'] = 404;
-                    $data['statusText'] = 'Menu not found';
+                    if (empty($result)) {
+                        $data['statusCode'] = 404;
+                        $data['statusText'] = 'Menu not found';
 
-                    return new JsonResponse($data, $data['statusCode']);
+                        return new JsonResponse($data, $data['statusCode']);
+                    }
+
+                    $data['data'] = $result;
+                } else {
+                    $data['data'] = 'Incorrect data received';
                 }
 
-                $data['data'] = $result;
-            } else {
-                $data['data'] = 'Incorrect data received';
-            }
+                $data['statusCode'] = $response->getStatusCode();
+                $data['statusText'] = $response->getReasonPhrase();
 
-            $data['statusCode'] = $response->getStatusCode();
-            $data['statusText'] = $response->getReasonPhrase();
-
-            return $data;
-        }, ['menus']);
+                return $data;
+            },
+            ['menus']
+        );
 
         return new JsonResponse($data, $data['statusCode']);
     }
@@ -119,8 +136,12 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data
      */
-    public static function getContentTypeJson(Request $api_request, string $locale, string $type, string $slug = null): JsonResponse
-    {
+    public static function getContentTypeJson(
+        Request $api_request,
+        string $locale,
+        string $type,
+        string $slug = null
+    ): JsonResponse {
         // Check for redirect in Drupal
         if ($slug && $redirect = RedirectService::check($locale, $type, $slug)) {
             return $redirect;
@@ -130,17 +151,22 @@ class DataService
         // $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
         $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
-        $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get('page') : 1;
-        $page_limit = (int) config('cms.pagination.limit');
+        $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int)$api_request->get(
+            'page'
+        ) : 1;
+        $page_limit = (int)config('cms.pagination.limit');
 
         $query = [
             'page' => [
                 'offset' => ($page - 1) * $page_limit,
                 'limit' => $page_limit,
-            ],
-            'filter' => [
+            ]
+        ];
+        if (in_array($type, config('cms.hasDate'))) {
+            $query['filter'] = [
                 'langcode' => [
-                    'value' => $locale, // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+                    'value' => $locale,
+                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                 ],
                 'datefilter' => [
                     'condition' => [
@@ -149,8 +175,8 @@ class DataService
                         'value' => Carbon::now()->toISOString(),
                     ],
                 ],
-            ],
-        ];
+            ];
+        }
 
         if ($slug) { // show content-type based on slug
             $path = '/' . $slug;
@@ -170,7 +196,11 @@ class DataService
                 ];
             }
 
-            if ($api_request->has('promote_overview') && in_array($api_request->get('promote_overview'), ['true', 'false'], true)) {
+            if ($api_request->has('promote_overview') && in_array(
+                    $api_request->get('promote_overview'),
+                    ['true', 'false'],
+                    true
+                )) {
                 $query['filter']['promote_overview'] = [
                     'value' => ($api_request->get('promote_overview') === 'true'),
                 ];
@@ -182,7 +212,9 @@ class DataService
                 ];
             }
 
-            $query['sort'] = '-sticky,-publish_date,title';
+            if (in_array($type, config('cms.hasDate'))) {
+                $query['sort'] = '-sticky,-publish_date,title';
+            }
         }
 
         $query = http_build_query($query);
@@ -191,9 +223,9 @@ class DataService
 
         $request = new OutgoingRequest('GET', $request_url);
         $request = $request
-                ->withProtocolVersion('1.1')
-                ->withHeader('Accept', 'application/vnd.api+json')
-                ->withHeader('Content-Type', 'application/vnd.api+json');
+            ->withProtocolVersion('1.1')
+            ->withHeader('Accept', 'application/vnd.api+json')
+            ->withHeader('Content-Type', 'application/vnd.api+json');
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
@@ -238,7 +270,7 @@ class DataService
                 $data['pagination'] = [
                     'page' => $page,
                     'limit' => $page_limit,
-                    'total' => $response->document()->hasMeta() ? (int) $response->document()->meta()['count'] : null,
+                    'total' => $response->document()->hasMeta() ? (int)$response->document()->meta()['count'] : null,
                 ];
             }
         } else {
@@ -254,7 +286,12 @@ class DataService
         return new JsonResponse($data, $data['statusCode']);
     }
 
-    public static function getContentType(Request $api_request, string $locale, string $type, string $slug = null)//: ?AnonymousResourceCollection
+    public static function getContentType(
+        Request $api_request,
+        string $locale,
+        string $type,
+        string $slug = null
+    )//: ?AnonymousResourceCollection
     {
         // $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
         // $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
@@ -270,7 +307,8 @@ class DataService
             // ],
             'filter' => [
                 'langcode' => [
-                    'value' => $locale, // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+                    'value' => $locale,
+                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                 ],
                 'datefilter' => [
                     'condition' => [
@@ -304,7 +342,11 @@ class DataService
                 ];
             }
 
-            if ($api_request->has('promote_overview') && in_array($api_request->get('promote_overview'), ['true', 'false'], true)) {
+            if ($api_request->has('promote_overview') && in_array(
+                    $api_request->get('promote_overview'),
+                    ['true', 'false'],
+                    true
+                )) {
                 $query['filter']['promote_overview'] = [
                     'value' => ($api_request->get('promote_overview') === 'true'),
                 ];
@@ -325,9 +367,9 @@ class DataService
 
         $request = new OutgoingRequest('GET', $request_url);
         $request = $request
-                ->withProtocolVersion('1.1')
-                ->withHeader('Accept', 'application/vnd.api+json')
-                ->withHeader('Content-Type', 'application/vnd.api+json');
+            ->withProtocolVersion('1.1')
+            ->withHeader('Accept', 'application/vnd.api+json')
+            ->withHeader('Content-Type', 'application/vnd.api+json');
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
@@ -396,7 +438,8 @@ class DataService
         $query = [
             'filter' => [
                 'langcode' => [
-                    'value' => $locale, // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+                    'value' => $locale,
+                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                 ],
                 'datefilter' => [
                     'condition' => [
@@ -418,9 +461,9 @@ class DataService
 
         $request = new OutgoingRequest('GET', $request_url);
         $request = $request
-                ->withProtocolVersion('1.1')
-                ->withHeader('Accept', 'application/vnd.api+json')
-                ->withHeader('Content-Type', 'application/vnd.api+json');
+            ->withProtocolVersion('1.1')
+            ->withHeader('Accept', 'application/vnd.api+json')
+            ->withHeader('Content-Type', 'application/vnd.api+json');
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
