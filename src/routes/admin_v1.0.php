@@ -12,14 +12,8 @@ Route::group(
         'where' => ['locale' => '(nl|en)'],
     ],
     function () {
-        // Forms
-        Route::post('form/{id}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@handleForm');
-
         // Menu routes
         Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getMenu')->where('type', '.*');
-
-        // Homepage
-        Route::get('/homepage', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getHomepage');
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
@@ -33,6 +27,6 @@ Route::group(
         }
 
         // Default page routes
-        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name('pages')->where('slug', '.*');
+        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name('page')->where('slug', '.*');
     }
 );
