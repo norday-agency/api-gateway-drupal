@@ -255,7 +255,7 @@ class DataService
                 return new JsonResponse($data, $data['statusCode']);
             }
 
-            if ($slug) {
+            if ($slug || $type === 'homepage') {
                 // Set content-type detail based on type and slug
                 $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
             } else {
