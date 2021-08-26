@@ -20,6 +20,52 @@ class RedirectService
             $redirect_path = trans("routes.{$type}") . '/' . $redirect_path;
         }
 
+        if (class_exists('App\Http\Controllers\Api\GlobalSettingsController')) {
+            $globalSettings = (new GlobalSettingsController())->getGlobalSettingsPage();
+
+            // maintenance mypass
+            if ($globalSettings[0]->maintenance_mypass && array_key_exists(
+                    $redirect_path,
+                    config('admin.maintenance_mypass.redirects')
+                )) {
+                $redirect = [
+                    "language" => "nl",
+                    "source" => $redirect_path,
+                    "url" => config("admin.maintenance_mypass.redirect_url"),
+                    "statusCode" => "307"
+                ];
+                return new JsonResponse($redirect, 307);
+            }
+            // maintenance shop
+            if ($globalSettings[0]->maintenance_shop && array_key_exists(
+                    $redirect_path,
+                    config('admin.maintenance_shop.redirects')
+                )) {
+                $redirect = [
+                    "language" => "nl",
+                    "source" => $redirect_path,
+                    "url" => config("admin.maintenance_shop.redirect_url"),
+                    "statusCode" => "307"
+                ];
+                return new JsonResponse($redirect, 307);
+            }
+            // maintenance partners
+            if ($globalSettings[0]->maintenance_partners && array_key_exists(
+                    $redirect_path,
+                    config(
+                        'admin.maintenance_partners.redirects'
+                    )
+                )) {
+                $redirect = [
+                    "language" => "nl",
+                    "source" => $redirect_path,
+                    "url" => config("admin.maintenance_partners.redirect_url"),
+                    "statusCode" => "307"
+                ];
+                return new JsonResponse($redirect, 307);
+            }
+        }
+
         $query = [
             'language' => $locale,
             'source' => $redirect_path,
