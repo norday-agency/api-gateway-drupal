@@ -305,19 +305,19 @@ class DataService
             //     'offset' => ($page - 1) * $page_limit,
             //     'limit' => $page_limit,
             // ],
-            'filter' => [
-                'langcode' => [
-                    'value' => $locale,
-                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
-                ],
-                'datefilter' => [
-                    'condition' => [
-                        'path' => 'publish_date',
-                        'operator' => '<=',
-                        'value' => Carbon::now()->toISOString(),
-                    ],
-                ],
-            ],
+//            'filter' => [
+//                'langcode' => [
+//                    'value' => $locale,
+//                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+//                ],
+//                'datefilter' => [
+//                    'condition' => [
+//                        'path' => 'publish_date',
+//                        'operator' => '<=',
+//                        'value' => Carbon::now()->toISOString(),
+//                    ],
+//                ],
+//            ],
         ];
 
         if ($slug) { // show content-type based on slug
