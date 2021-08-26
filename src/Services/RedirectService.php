@@ -7,6 +7,7 @@ use GuzzleHttp\Psr7\Uri;
 use Http\Adapter\Guzzle6\Client as g6Client;
 use Illuminate\Http\JsonResponse;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
+use App\Http\Controllers\Api\GlobalSettingsController;
 
 class RedirectService
 {
@@ -24,8 +25,8 @@ class RedirectService
             $globalSettings = (new GlobalSettingsController())->getGlobalSettingsPage();
 
             // maintenance mypass
-            if ($globalSettings[0]->maintenance_mypass && array_key_exists(
-                    $redirect_path,
+            if ($globalSettings[0]->maintenance_mypass && in_array(
+                    substr($redirect_path,strpos($redirect_path, '/') + 1),
                     config('admin.maintenance_mypass.redirects')
                 )) {
                 $redirect = [
@@ -37,8 +38,8 @@ class RedirectService
                 return new JsonResponse($redirect, 307);
             }
             // maintenance shop
-            if ($globalSettings[0]->maintenance_shop && array_key_exists(
-                    $redirect_path,
+            if ($globalSettings[0]->maintenance_shop && in_array(
+                    substr($redirect_path,strpos($redirect_path, '/') + 1),
                     config('admin.maintenance_shop.redirects')
                 )) {
                 $redirect = [
@@ -50,8 +51,8 @@ class RedirectService
                 return new JsonResponse($redirect, 307);
             }
             // maintenance partners
-            if ($globalSettings[0]->maintenance_partners && array_key_exists(
-                    $redirect_path,
+            if ($globalSettings[0]->maintenance_partners && in_array(
+                    substr($redirect_path,strpos($redirect_path, '/') + 1),
                     config(
                         'admin.maintenance_partners.redirects'
                     )
