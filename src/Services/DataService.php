@@ -113,7 +113,7 @@ class DataService
                         $data['statusCode'] = 404;
                         $data['statusText'] = 'Menu not found';
 
-                        return new JsonResponse($data, $data['statusCode']);
+                        return $data;
                     }
 
                     $data['data'] = $result;
@@ -262,7 +262,7 @@ class DataService
                         $data['statusCode'] = 404;
                         $data['statusText'] = 'Page not found';
 
-                        return new JsonResponse($data, $data['statusCode']);
+                        return $data;
                     }
 
                     if ($slug || in_array($type, config('admin.noPagination'))) {
