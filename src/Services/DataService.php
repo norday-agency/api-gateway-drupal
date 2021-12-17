@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
-use Http\Adapter\Guzzle6\Client as G6Client;
+use Http\Adapter\Guzzle7\Client as g7Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
@@ -48,9 +48,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = G6Client::createWithConfig(['verify' => false]);
+            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
         } else {
-            $guzzleClient = G6Client::createWithConfig([]);
+            $guzzleClient = g7Client::createWithConfig([]);
         }
 
         // Instantiate the synchronous JSON:API Client
@@ -239,9 +239,9 @@ class DataService
 
                 // Instantiate the Guzzle HTTP Client
                 if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = G6Client::createWithConfig(['verify' => false]);
+                    $guzzleClient = g7Client::createWithConfig(['verify' => false]);
                 } else {
-                    $guzzleClient = G6Client::createWithConfig([]);
+                    $guzzleClient = g7Client::createWithConfig([]);
                 }
 
                 // Instantiate the synchronous JSON:API Client
@@ -376,9 +376,9 @@ class DataService
 
                 // Instantiate the Guzzle HTTP Client
                 if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = G6Client::createWithConfig(['verify' => false]);
+                    $guzzleClient = g7Client::createWithConfig(['verify' => false]);
                 } else {
-                    $guzzleClient = G6Client::createWithConfig([]);
+                    $guzzleClient = g7Client::createWithConfig([]);
                 }
 
                 // Instantiate the synchronous JSON:API Client
@@ -461,9 +461,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = G6Client::createWithConfig(['verify' => false]);
+            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
         } else {
-            $guzzleClient = G6Client::createWithConfig([]);
+            $guzzleClient = g7Client::createWithConfig([]);
         }
 
         // Instantiate the synchronous JSON:API Client

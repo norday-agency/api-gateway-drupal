@@ -4,7 +4,7 @@ namespace IN10\ApiGatewayDrupal\Services;
 
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
-use Http\Adapter\Guzzle6\Client as g6Client;
+use Http\Adapter\Guzzle7\Client as g7Client;
 use Illuminate\Http\JsonResponse;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use App\Http\Controllers\Api\GlobalSettingsController;
@@ -81,9 +81,9 @@ class RedirectService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = g6Client::createWithConfig(['verify' => false]);
+            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
         } else {
-            $guzzleClient = g6Client::createWithConfig([]);
+            $guzzleClient = g7Client::createWithConfig([]);
         }
 
         // Instantiate the synchronous JSON:API Client
