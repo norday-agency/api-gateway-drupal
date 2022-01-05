@@ -219,7 +219,7 @@ class DataService
                         ];
                     }
 
-                    $query['sort'] = '-sticky,-publish_date,title';
+                    $query['sort'] = 'title';
                 }
 
                 $query = http_build_query($query);
