@@ -172,13 +172,13 @@ class DataService
                         'value' => $locale,
                         // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                     ],
-                    'datefilter' => [
-                        'condition' => [
-                            'path' => 'publish_date',
-                            'operator' => '<=',
-                            'value' => Carbon::now()->toISOString(),
-                        ],
-                    ],
+                    // 'datefilter' => [
+                    //     'condition' => [
+                    //         'path' => 'publish_date',
+                    //         'operator' => '<=',
+                    //         'value' => Carbon::now()->toISOString(),
+                    //     ],
+                    // ],
                 ];
 
                 if ($slug) { // show content-type based on slug
