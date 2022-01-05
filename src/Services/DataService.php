@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
-use Http\Adapter\Guzzle7\Client as g7Client;
+use Http\Adapter\Guzzle7\Client as G7Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
@@ -48,9 +48,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
+            $guzzleClient = G7Client::createWithConfig(['verify' => false]);
         } else {
-            $guzzleClient = g7Client::createWithConfig([]);
+            $guzzleClient = G7Client::createWithConfig([]);
         }
 
         // Instantiate the synchronous JSON:API Client
@@ -107,7 +107,7 @@ class DataService
                 $response = $client->request('GET', $request_url, $request);
 
                 if ($response->getStatusCode() == 200) {
-                    $result = json_decode((string)$response->getBody());
+                    $result = json_decode((string) $response->getBody());
 
                     if (empty($result)) {
                         $data['statusCode'] = 404;
@@ -155,32 +155,31 @@ class DataService
             function () use ($api_request, $locale, $type, $slug) {
                 $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
-                $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int)$api_request->get(
+                $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get(
                     'page'
                 ) : 1;
-                $page_limit = (int)config('cms.pagination.limit');
+                $page_limit = (int) config('cms.pagination.limit');
 
                 $query = [
                     'page' => [
                         'offset' => ($page - 1) * $page_limit,
                         'limit' => $page_limit,
-                    ]
+                    ],
                 ];
-                if (in_array($type, config('cms.hasDate'))) {
-                    $query['filter'] = [
-                        'langcode' => [
-                            'value' => $locale,
-                            // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+
+                $query['filter'] = [
+                    'langcode' => [
+                        'value' => $locale,
+                        // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+                    ],
+                    'datefilter' => [
+                        'condition' => [
+                            'path' => 'publish_date',
+                            'operator' => '<=',
+                            'value' => Carbon::now()->toISOString(),
                         ],
-                        'datefilter' => [
-                            'condition' => [
-                                'path' => 'publish_date',
-                                'operator' => '<=',
-                                'value' => Carbon::now()->toISOString(),
-                            ],
-                        ],
-                    ];
-                }
+                    ],
+                ];
 
                 if ($slug) { // show content-type based on slug
                     $path = '/' . $slug;
@@ -220,9 +219,7 @@ class DataService
                         ];
                     }
 
-                    if (in_array($type, config('cms.hasDate'))) {
-                        $query['sort'] = '-sticky,-publish_date,title';
-                    }
+                    $query['sort'] = '-sticky,-publish_date,title';
                 }
 
                 $query = http_build_query($query);
@@ -239,9 +236,9 @@ class DataService
 
                 // Instantiate the Guzzle HTTP Client
                 if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = g7Client::createWithConfig(['verify' => false]);
+                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
                 } else {
-                    $guzzleClient = g7Client::createWithConfig([]);
+                    $guzzleClient = G7Client::createWithConfig([]);
                 }
 
                 // Instantiate the synchronous JSON:API Client
@@ -265,7 +262,7 @@ class DataService
                         return $data;
                     }
 
-                    if ($slug || in_array($type, config('admin.noPagination'))) {
+                    if ($slug) {
                         // Set content-type detail based on type and slug
                         $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                     } else {
@@ -280,7 +277,7 @@ class DataService
                         $data['pagination'] = [
                             'page' => $page,
                             'limit' => $page_limit,
-                            'total' => $response->document()->hasMeta() ? (int)$response->document()->meta(
+                            'total' => $response->document()->hasMeta() ? (int) $response->document()->meta(
                             )['count'] : null,
                         ];
                     }
@@ -376,9 +373,9 @@ class DataService
 
                 // Instantiate the Guzzle HTTP Client
                 if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = g7Client::createWithConfig(['verify' => false]);
+                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
                 } else {
-                    $guzzleClient = g7Client::createWithConfig([]);
+                    $guzzleClient = G7Client::createWithConfig([]);
                 }
 
                 // Instantiate the synchronous JSON:API Client
@@ -461,9 +458,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
+            $guzzleClient = G7Client::createWithConfig(['verify' => false]);
         } else {
-            $guzzleClient = g7Client::createWithConfig([]);
+            $guzzleClient = G7Client::createWithConfig([]);
         }
 
         // Instantiate the synchronous JSON:API Client
