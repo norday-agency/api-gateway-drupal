@@ -27,6 +27,6 @@ Route::group(
         }
 
         // Default page routes
-        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name('page')->where('slug', '.*');
+        Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name('pages')->where('slug', '.*');
     }
 );
