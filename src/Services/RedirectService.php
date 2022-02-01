@@ -21,7 +21,7 @@ class RedirectService
             $redirect_path = trans("routes.{$type}") . '/' . $redirect_path;
         }
 
-        if (class_exists('App\Http\Controllers\Api\GlobalSettingsController')) {
+        if (config('website.account') === 'rotterdampas' && class_exists('App\Http\Controllers\Api\GlobalSettingsController')) {
             $globalSettings = (new GlobalSettingsController())->getGlobalSettingsPage();
 
             // maintenance mypass
