@@ -59,8 +59,8 @@ class TranslationService
                 $hydrator = new ClassDocumentHydrator();
                 $hydratedData = $hydrator->hydrate($response->document());
                 $prefix = $supportedLocale === config('app.base_locale') ? '' : '/' . $supportedLocale;
-                $translations[$supportedLocale] = (isset($hydratedData[0]) && $hydratedData[0]->langcode === $supportedLocale) ? ($prefix . $hydratedData[0]->field_path) : null;
             }
+            $translations[$supportedLocale] = (isset($hydratedData[0]) && $hydratedData[0]->langcode === $supportedLocale) ? ($prefix . $hydratedData[0]->field_path) : null;
         }
 
         return $translations;
