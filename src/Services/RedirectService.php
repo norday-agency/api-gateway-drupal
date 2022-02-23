@@ -17,7 +17,8 @@ class RedirectService
     public static function check(string $locale, string $type, string $slug): ?JsonResponse
     {
         $redirect_path = $slug;
-        if ($type !== 'page') {
+
+        if (!empty(trans("routes.{$type}"))) {
             $redirect_path = trans("routes.{$type}") . '/' . $redirect_path;
         }
 
