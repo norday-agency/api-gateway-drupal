@@ -18,7 +18,7 @@ class RedirectService
     {
         $redirect_path = $slug;
 
-        if (!empty(trans("routes.{$type}"))) {
+        if ($type !== 'pages') {
             $redirect_path = trans("routes.{$type}") . '/' . $redirect_path;
         }
 
