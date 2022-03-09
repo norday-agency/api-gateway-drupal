@@ -17,6 +17,11 @@ class TranslationService
      */
     public static function get(string $locale, string $type, string $slug)
     {
+
+        if ($type === 'page') {
+            $type = 'pages';
+        }
+
         $supportedLocales = array_diff(config('app.supported_locales'), [$locale]);
 
         $translations = [
