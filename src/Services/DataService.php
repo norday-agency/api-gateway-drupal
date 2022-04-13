@@ -9,6 +9,7 @@ use GuzzleHttp\Psr7\Uri;
 use Http\Adapter\Guzzle7\Client as G7Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
@@ -18,7 +19,7 @@ class DataService
         Request $api_request,
         string $locale,
         string $id
-    )//: ?AnonymousResourceCollection
+    )// : ?AnonymousResourceCollection
     {
 //         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
 //         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
@@ -133,7 +134,7 @@ class DataService
     }
 
     /**
-     * Call Drupal JSON API for contenttype data
+     * Call Drupal JSON API for contenttype data and return JsonResponse
      */
     public static function getContentTypeJson(
         Request $api_request,
@@ -301,13 +302,15 @@ class DataService
         return new JsonResponse($data, $data['statusCode']);
     }
 
+    /**
+     * Call Drupal JSON API for contenttype data and return resource collection
+     */
     public static function getContentType(
         Request $api_request,
         string $locale,
         string $type,
         string $slug = null
-    )//: ?AnonymousResourceCollection
-    {
+    ) {
         $cache_id = hash(
             'sha256',
             implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())]))
@@ -421,6 +424,73 @@ class DataService
     }
 
     /**
+     * Call Drupal JSON API for contenttype data based on cutom query and return resource collection
+     */
+    public static function getContentTypeByQuery(
+        array $query,
+        string $locale,
+        string $type
+    ): ?AnonymousResourceCollection {
+        $cache_id = hash(
+            'sha256',
+            implode('.', array_filter([$locale, $type, http_build_query($query)]))
+        );
+        $data = CacheContent::remember(
+            $cache_id,
+            function () use ($query, $locale, $type) {
+                if (!array_key_exists('sort', $query)) {
+                    $query['sort'] = '-sticky,-publish_date,title';
+                }
+
+                $query = http_build_query($query);
+
+                $request_url = new Uri(
+                    config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
+                );
+
+                $request = new OutgoingRequest('GET', $request_url);
+                $request = $request
+                    ->withProtocolVersion('1.1')
+                    ->withHeader('Accept', 'application/vnd.api+json')
+                    ->withHeader('Content-Type', 'application/vnd.api+json');
+
+                // Instantiate the Guzzle HTTP Client
+                if (in_array(config('app.env'), ['local', 'test'])) {
+                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+                } else {
+                    $guzzleClient = G7Client::createWithConfig([]);
+                }
+
+                // Instantiate the synchronous JSON:API Client
+                $client = new JsonApiClient($guzzleClient);
+
+                // Send the request synchronously to retrieve the response
+                $response = $client->sendRequest($request);
+                $response->getReasonPhrase();
+
+                $resource = config("cms.types.{$type}");
+
+                if ($resource && $response->isSuccessfulDocument([200, 202])) {
+                    // Hydrate the document to an stdClass
+                    $hydrator = new ClassDocumentHydrator();
+                    $hydratedData = $hydrator->hydrate($response->document());
+
+                    if (empty($hydratedData)) {
+                        return null;
+                    }
+
+                    return $resource::collection($hydratedData);
+                } else {
+                    return null;
+                }
+            },
+            [$type]
+        );
+
+        return $data;
+    }
+
+    /**
      * Call Drupal JSON API for translated node data
      *
      * @return array|null
@@ -482,7 +552,7 @@ class DataService
             $hydrator = new ClassDocumentHydrator();
             $hydratedData = $hydrator->hydrate($response->document());
             if (!empty($hydratedData)) {
-                return '/' . $hydratedData[0]->langcode . $hydratedData[0]->slug; //new $resource($hydratedData[0]);
+                return '/' . $hydratedData[0]->langcode . $hydratedData[0]->slug; // new $resource($hydratedData[0]);
             }
         }
 
