@@ -18,7 +18,7 @@ class RedirectService
     {
         $redirect_path = $slug;
 
-        if (!empty(trans("routes.{$type}"))) {
+        if ($type !== 'pages') {
             $redirect_path = trans("routes.{$type}") . '/' . $redirect_path;
         }
 
@@ -93,6 +93,10 @@ class RedirectService
 
         if ($redirectResponse->getStatusCode() < 300) {
             $contents = json_decode($redirectResponse->getBody()->getContents(), true);
+
+            if ($locale === config('app.base_locale') && strpos($contents['url'], '/' . $locale) === 0) {
+                $contents['url'] = substr($contents['url'], 3);
+            }
 
             return new JsonResponse($contents, $contents['statusCode']);
         }
