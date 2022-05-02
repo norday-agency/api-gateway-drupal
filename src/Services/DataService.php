@@ -296,6 +296,19 @@ class DataService
             [$type]
         );
 
+        if (config('website.account') === 'rotterdampas' && $data['statusCode'] === 404 && strpos(
+                $slug,
+                'blog/'
+            ) !== false) {
+            $contents = [
+                "language" => "nl",
+                "source" => $slug,
+                "url" => "/nl/inspiratie",
+                "statusCode" => "301"
+            ];
+            return new JsonResponse($contents, $contents['statusCode']);
+        }
+
         return new JsonResponse($data, $data['statusCode']);
     }
 
