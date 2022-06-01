@@ -59,7 +59,6 @@ class DataService
 
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);
-        $response->getReasonPhrase();
 
         if ($response->isSuccessfulDocument([200, 202])) {
             // Hydrate the document to an stdClass
@@ -70,15 +69,15 @@ class DataService
                 return null;
             }
 
-            $data = $hydratedData[0];
-        } else {
-            return null;
+            return $hydratedData[0];
+        } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+            \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
         }
 
         //     return $data;
         // }, [$type]);
 
-        return $data;
+        return null;
     }
 
     /**
@@ -124,6 +123,10 @@ class DataService
 
                 $data['statusCode'] = $response->getStatusCode();
                 $data['statusText'] = $response->getReasonPhrase();
+
+                if ($response->getStatusCode() !== 200 && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+                }
 
                 return $data;
             },
@@ -252,7 +255,6 @@ class DataService
 
                 // Send the request synchronously to retrieve the response
                 $response = $client->sendRequest($request);
-                $response->getReasonPhrase();
 
                 $resource = config("cms.types.{$type}");
 
@@ -293,6 +295,10 @@ class DataService
 
                 $data['statusCode'] = $response->getStatusCode();
                 $data['statusText'] = $response->getReasonPhrase();
+
+                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $data['statusCode'], $data['statusText']);
+                }
 
                 return $data;
             },
@@ -391,7 +397,6 @@ class DataService
 
                 // Send the request synchronously to retrieve the response
                 $response = $client->sendRequest($request);
-                $response->getReasonPhrase();
 
                 $resource = config("cms.types.{$type}");
 
@@ -411,11 +416,15 @@ class DataService
                         // Set content-type collection
                         $data = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
                     }
-                } else {
-                    return null;
+
+                    return $data;
                 }
 
-                return $data;
+                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+                }
+
+                return null;
             },
             [$type]
         );
@@ -466,7 +475,6 @@ class DataService
 
                 // Send the request synchronously to retrieve the response
                 $response = $client->sendRequest($request);
-                $response->getReasonPhrase();
 
                 $resource = config("cms.types.{$type}");
 
@@ -480,9 +488,13 @@ class DataService
                     }
 
                     return $resource::collection($hydratedData);
-                } else {
-                    return null;
                 }
+
+                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+                }
+
+                return null;
             },
             [$type]
         );
@@ -543,7 +555,6 @@ class DataService
 
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);
-        $response->getReasonPhrase();
 
         $resource = config("cms.types.{$type}");
 
@@ -551,6 +562,7 @@ class DataService
             // Hydrate the document to an stdClass
             $hydrator = new ClassDocumentHydrator();
             $hydratedData = $hydrator->hydrate($response->document());
+
             if (!empty($hydratedData)) {
                 return '/' . $hydratedData[0]->langcode . $hydratedData[0]->slug; // new $resource($hydratedData[0]);
             }
@@ -558,6 +570,10 @@ class DataService
 
         //     return $translation;
         // }, [$type]);
+
+        if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+            \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+        }
 
         return null;
     }
