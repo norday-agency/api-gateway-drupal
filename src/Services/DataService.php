@@ -154,6 +154,7 @@ class DataService
             'sha256',
             implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())]))
         );
+
         $data = CacheContent::remember(
             $cache_id,
             function () use ($api_request, $locale, $type, $slug) {
@@ -326,7 +327,17 @@ class DataService
             function () use ($api_request, $locale, $type, $slug) {
                 $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
-                $query = [];
+                $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get(
+                    'page'
+                ) : 1;
+                $page_limit = (int) config('cms.pagination.limit');
+
+                $query = [
+                    'page' => [
+                        'offset' => ($page - 1) * $page_limit,
+                        'limit' => $page_limit,
+                    ],
+                ];
 
                 if ($slug) { // show content-type based on slug
                     $path = '/' . $slug;

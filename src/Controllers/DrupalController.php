@@ -55,12 +55,22 @@ class DrupalController extends Controller
         if (!$sitemap->isCached()) {
             foreach (config('app.supported_locales') as $locale) {
                 foreach (array_keys(config('cms.types')) as $type) {
-                    if ($data = DataService::getContentType($request, $locale, $type)) {
-                        $data->each(function ($item) use ($locale, $sitemap) {
-                            $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
-                            $lastModified = $item->edit_date;
-                            $sitemap->add($url, $lastModified, '1.0', 'weekly');
-                        });
+                    $page = 1;
+                    
+                    while (1) {
+                        if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
+                            $data->each(function ($item) use ($locale, $sitemap) {
+                                $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
+                                if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
+                                    $lastModified = $item->edit_date;
+                                    $sitemap->add($url, $lastModified, '1.0', 'weekly');
+                                }
+                            });
+                        } else {
+                            break;
+                        }
+
+                        $page++;
                     }
                 }
             }
@@ -68,4 +78,14 @@ class DrupalController extends Controller
 
         return $sitemap->render('xml');
     }
+
+    private function fetchPageForType(int $page = 1, Request $request, $locale, $type)
+    {
+        $request->request->set('page', $page);
+
+        if ($data = DataService::getContentType($request, $locale, $type)) {
+            return $data;
+        } else {
+            return NULL;
+       
 }
