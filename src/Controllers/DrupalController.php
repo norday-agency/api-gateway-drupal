@@ -61,8 +61,10 @@ class DrupalController extends Controller
                         if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
                             $data->each(function ($item) use ($locale, $sitemap) {
                                 $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
-                                $lastModified = $item->edit_date;
-                                $sitemap->add($url, $lastModified, '1.0', 'weekly');
+                                if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
+                                    $lastModified = $item->edit_date;
+                                    $sitemap->add($url, $lastModified, '1.0', 'weekly');
+                                }
                             });
                         } else {
                             break;
