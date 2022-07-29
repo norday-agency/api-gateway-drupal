@@ -1,10 +1,10 @@
 <?php
 
-// Sitemap
-Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap');
-
 // Clear cache
 Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
+
+// Sitemap
+Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap');
 
 Route::group(
     [
@@ -12,8 +12,11 @@ Route::group(
         'where' => ['locale' => '(nl|en)'],
     ],
     function () {
+        // Global settins
+        Route::get('settings', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSettings')->name('settings');
+
         // Menu routes
-        Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getMenu')->where('type', '.*');
+        Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getMenu')->where('type', '.*')->name('menu');
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
