@@ -9,6 +9,9 @@
     ],
     "minimum-stability": "stable",
     "require": {
+        "bugsnag/bugsnag-laravel": "^2.0",
+        "darkaonline/l5-swagger": "^8.1",
+        "laravelium/sitemap": "^8.0",
         "php-http/guzzle7-adapter": "^1.0",
         "woohoolabs/yang": "2.2.1"
     },
