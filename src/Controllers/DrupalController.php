@@ -3,6 +3,7 @@
 namespace IN10\ApiGatewayDrupal\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use IN10\ApiGatewayDrupal\Services\DataService;
@@ -32,7 +33,7 @@ class DrupalController extends Controller
      */
     public function getMenu(Request $request, string $locale, string $type): JsonResponse
     {
-        return DataService::getMenu($request, $locale, $type);
+        return DataService::getMenuJson($request, $locale, $type);
     }
 
     /**
@@ -56,7 +57,7 @@ class DrupalController extends Controller
             foreach (config('app.supported_locales') as $locale) {
                 foreach (array_keys(config('cms.types')) as $type) {
                     $page = 1;
-                    
+
                     while (1) {
                         if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
                             $data->each(function ($item) use ($locale, $sitemap) {
@@ -70,7 +71,7 @@ class DrupalController extends Controller
                             break;
                         }
 
-                        $page++;
+                        ++$page;
                     }
                 }
             }
@@ -86,6 +87,7 @@ class DrupalController extends Controller
         if ($data = DataService::getContentType($request, $locale, $type)) {
             return $data;
         } else {
-            return NULL;
-       
+            return null;
+        }
+    }
 }
