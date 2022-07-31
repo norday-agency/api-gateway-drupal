@@ -15,69 +15,63 @@ use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
 class DataService
 {
-    public static function getParagraphType(
-        Request $api_request,
-        string $locale,
-        string $id
-    )// : ?AnonymousResourceCollection
+    public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
     {
-//         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
-//         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
-
-        $query = [
-            'filter' => [
-                'langcode' => [
-                    'value' => $locale,
-                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
+        $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
+        $data = CacheContent::remember($cache_id, function () use ($locale, $id) {
+            $query = [
+                'filter' => [
+                    'langcode' => [
+                        'value' => $locale,
+                    ],
                 ],
-            ],
-        ];
+            ];
 
-        $query = http_build_query($query);
+            $query = http_build_query($query);
 
-        $request_url = new Uri(
-            config('cms.url') . '/' . $locale . config(
-                'cms.endpoint'
-            ) . '/paragraph/component_form/' . $id . '?' . $query
-        );
+            $request_url = new Uri(
+                config('cms.url') . '/' . $locale . config(
+                    'cms.endpoint'
+                ) . '/paragraph/component_form/' . $id . '?' . $query
+            );
 
-        $request = new OutgoingRequest('GET', $request_url);
-        $request = $request
+            $request = new OutgoingRequest('GET', $request_url);
+            $request = $request
             ->withProtocolVersion('1.1')
             ->withHeader('Accept', 'application/vnd.api+json')
             ->withHeader('Content-Type', 'application/vnd.api+json');
 
-        // Instantiate the Guzzle HTTP Client
-        if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = G7Client::createWithConfig(['verify' => false]);
-        } else {
-            $guzzleClient = G7Client::createWithConfig([]);
-        }
-
-        // Instantiate the synchronous JSON:API Client
-        $client = new JsonApiClient($guzzleClient);
-
-        // Send the request synchronously to retrieve the response
-        $response = $client->sendRequest($request);
-
-        if ($response->isSuccessfulDocument([200, 202])) {
-            // Hydrate the document to an stdClass
-            $hydrator = new ClassDocumentHydrator();
-            $hydratedData = $hydrator->hydrate($response->document());
-
-            if (empty($hydratedData)) {
-                return null;
+            // Instantiate the Guzzle HTTP Client
+            if (in_array(config('app.env'), ['local', 'test'])) {
+                $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            } else {
+                $guzzleClient = G7Client::createWithConfig([]);
             }
 
-            return $hydratedData[0];
-        } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-            \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
-        }
+            // Instantiate the synchronous JSON:API Client
+            $client = new JsonApiClient($guzzleClient);
 
-        //     return $data;
-        // }, [$type]);
+            // Send the request synchronously to retrieve the response
+            $response = $client->sendRequest($request);
 
-        return null;
+            if ($response->isSuccessfulDocument([200, 202])) {
+                // Hydrate the document to an stdClass
+                $hydrator = new ClassDocumentHydrator();
+                $hydratedData = $hydrator->hydrate($response->document());
+
+                if (empty($hydratedData)) {
+                    return null;
+                }
+
+                return $hydratedData[0];
+            } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            }
+
+            return null;
+        }, ['paragraphs']);
+
+        return $data;
     }
 
     /**
@@ -86,52 +80,48 @@ class DataService
     public static function getMenu(Request $api_request, string $locale, string $type): JsonResponse
     {
         $cache_id = hash('sha256', "{$locale}.menu.{$type}");
-        $data = CacheContent::remember(
-            $cache_id,
-            function () use ($locale, $type) {
-                $client = new GuzzleClient();
+        $data = CacheContent::remember($cache_id, function () use ($locale, $type) {
+            $client = new GuzzleClient();
 
-                $request = [
-                    'headers' => [
-                        'Accept' => 'application/hal+json',
-                        'Content-Type' => 'application/hal+json',
-                    ],
-                ];
+            $request = [
+                'headers' => [
+                    'Accept' => 'application/hal+json',
+                    'Content-Type' => 'application/hal+json',
+                ],
+            ];
 
-                $request_url = new Uri(
-                    config('cms.url') . '/' . $locale . config(
-                        'cms.endpoint'
-                    ) . '/menu_items/' . $type . '?locale=' . $locale
-                );
+            $request_url = new Uri(
+                config('cms.url') . '/' . $locale . config(
+                    'cms.endpoint'
+                ) . '/menu_items/' . $type . '?locale=' . $locale
+            );
 
-                $response = $client->request('GET', $request_url, $request);
+            $response = $client->request('GET', $request_url, $request);
 
-                if ($response->getStatusCode() == 200) {
-                    $result = json_decode((string) $response->getBody());
+            if ($response->getStatusCode() == 200) {
+                $result = json_decode((string) $response->getBody());
 
-                    if (empty($result)) {
-                        $data['statusCode'] = 404;
-                        $data['statusText'] = 'Menu not found';
+                if (empty($result)) {
+                    $data['statusCode'] = 404;
+                    $data['statusText'] = 'Menu not found';
 
-                        return $data;
-                    }
-
-                    $data['data'] = $result;
-                } else {
-                    $data['data'] = 'Incorrect data received';
+                    return $data;
                 }
 
-                $data['statusCode'] = $response->getStatusCode();
-                $data['statusText'] = $response->getReasonPhrase();
+                $data['data'] = $result;
+            } else {
+                $data['data'] = 'Incorrect data received';
+            }
 
-                if ($response->getStatusCode() !== 200 && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
-                }
+            $data['statusCode'] = $response->getStatusCode();
+            $data['statusText'] = $response->getReasonPhrase();
 
-                return $data;
-            },
-            ['menus']
-        );
+            if ($response->getStatusCode() !== 200 && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            }
+
+            return $data;
+        }, ['menus']);
 
         return new JsonResponse($data, $data['statusCode']);
     }
@@ -139,172 +129,139 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return JsonResponse
      */
-    public static function getContentTypeJson(
-        Request $api_request,
-        string $locale,
-        string $type,
-        string $slug = null
-    ): JsonResponse {
+    public static function getContentTypeJson(Request $api_request, string $locale, string $type, string $slug = null): JsonResponse
+    {
         // Check for redirect in Drupal
         if ($slug && $redirect = RedirectService::check($locale, $type, $slug)) {
             return $redirect;
         }
 
-        $cache_id = hash(
-            'sha256',
-            implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())]))
-        );
+        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
+        $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
+            $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
-        $data = CacheContent::remember(
-            $cache_id,
-            function () use ($api_request, $locale, $type, $slug) {
-                $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
+            $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get('page') : 1;
+            $page_limit = (int) config('cms.pagination.limit');
 
-                $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get(
-                    'page'
-                ) : 1;
-                $page_limit = (int) config('cms.pagination.limit');
+            $query = [
+                'page' => [
+                    'offset' => ($page - 1) * $page_limit,
+                    'limit' => $page_limit,
+                ],
+            ];
 
-                $query = [
-                    'page' => [
-                        'offset' => ($page - 1) * $page_limit,
-                        'limit' => $page_limit,
+            $query['filter'] = [
+                'langcode' => [
+                    'value' => $locale,
+                ],
+                'datefilter' => [
+                    'condition' => [
+                        'path' => 'publish_date',
+                        'operator' => '<=',
+                        'value' => Carbon::now()->toISOString(),
                     ],
-                ];
+                ],
+            ];
 
-                $query['filter'] = [
-                    'langcode' => [
-                        'value' => $locale,
-                        // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
-                    ],
-                    // 'datefilter' => [
-                    //     'condition' => [
-                    //         'path' => 'publish_date',
-                    //         'operator' => '<=',
-                    //         'value' => Carbon::now()->toISOString(),
-                    //     ],
-                    // ],
-                ];
+            if ($slug) { // show content-type based on slug
+                $path = '/' . $slug;
 
-                if ($slug) { // show content-type based on slug
-                    $path = '/' . $slug;
-
-                    if ($type !== 'pages' && strpos(trans("routes.{$type}"), 'routes.') === false) {
-                        $path = '/' . trans("routes.{$type}") . $path;
-                    }
-
-                    $query['filter']['field_path'] = [
-                        'value' => $path,
-                    ];
-                } else { // show content-type index
-                    if ($api_request->has('contributor') && is_numeric($api_request->get('contributor'))) {
-                        $query['filter']['contributor.drupal_internal__nid'] = [
-                            'value' => $api_request->get('contributor'),
-                        ];
-                    }
-
-                    if ($api_request->has('promote') && in_array(
-                            $api_request->get('promote'),
-                            ['true', 'false'],
-                            true
-                        )) {
-                        $query['filter']['promote'] = [
-                            'value' => ($api_request->get('promote') === 'true'),
-                        ];
-                    }
-
-                    if ($api_request->has('promote_overview') && in_array(
-                            $api_request->get('promote_overview'),
-                            ['true', 'false'],
-                            true
-                        )) {
-                        $query['filter']['promote_overview'] = [
-                            'value' => ($api_request->get('promote_overview') === 'true'),
-                        ];
-                    }
-
-                    if ($api_request->has('sticky') && in_array($api_request->get('sticky'), ['true', 'false'], true)) {
-                        $query['filter']['sticky'] = [
-                            'value' => ($api_request->get('sticky') === 'true'),
-                        ];
-                    }
-
-                    $query['sort'] = 'title';
+                if ($type !== 'pages' && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                    $path = '/' . trans("routes.{$type}") . $path;
                 }
 
-                $query = http_build_query($query);
+                $query['filter']['field_path'] = [
+                    'value' => $path,
+                ];
+            } else { // show content-type index
+                if ($api_request->has('promote') && in_array($api_request->get('promote'), ['true', 'false'], true)) {
+                    $query['filter']['promote'] = [
+                        'value' => ($api_request->get('promote') === 'true'),
+                    ];
+                }
 
-                $request_url = new Uri(
-                    config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
-                );
+                if ($api_request->has('promote_overview') && in_array($api_request->get('promote_overview'), ['true', 'false'], true)) {
+                    $query['filter']['promote_overview'] = [
+                        'value' => ($api_request->get('promote_overview') === 'true'),
+                    ];
+                }
 
-                $request = new OutgoingRequest('GET', $request_url);
-                $request = $request
+                if ($api_request->has('sticky') && in_array($api_request->get('sticky'), ['true', 'false'], true)) {
+                    $query['filter']['sticky'] = [
+                        'value' => ($api_request->get('sticky') === 'true'),
+                    ];
+                }
+
+                $query['sort'] = '-sticky,-publish_date,title';
+            }
+
+            $query = http_build_query($query);
+
+            $request_url = new Uri(
+                config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
+            );
+
+            $request = new OutgoingRequest('GET', $request_url);
+            $request = $request
                     ->withProtocolVersion('1.1')
                     ->withHeader('Accept', 'application/vnd.api+json')
                     ->withHeader('Content-Type', 'application/vnd.api+json');
 
-                // Instantiate the Guzzle HTTP Client
-                if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            // Instantiate the Guzzle HTTP Client
+            if (in_array(config('app.env'), ['local', 'test'])) {
+                $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            } else {
+                $guzzleClient = G7Client::createWithConfig([]);
+            }
+
+            // Instantiate the synchronous JSON:API Client
+            $client = new JsonApiClient($guzzleClient);
+
+            // Send the request synchronously to retrieve the response
+            $response = $client->sendRequest($request);
+
+            $resource = config("cms.types.{$type}");
+
+            if ($resource && $response->isSuccessfulDocument([200, 202])) {
+                // Hydrate the document to an stdClass
+                $hydrator = new ClassDocumentHydrator();
+                $hydratedData = $hydrator->hydrate($response->document());
+
+                if (empty($hydratedData)) {
+                    $data['statusCode'] = 404;
+                    $data['statusText'] = 'Page not found';
+
+                    return $data;
+                }
+
+                if ($slug) {
+                    // Set content-type detail based on type and slug
+                    $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                 } else {
-                    $guzzleClient = G7Client::createWithConfig([]);
+                    // Set content-type collection
+                    $data['data'] = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
+
+                    // Set paging properties
+                    $data['pagination'] = [
+                        'page' => $page,
+                        'limit' => $page_limit,
+                        'total' => $response->document()->hasMeta() ? (int) $response->document()->meta(
+                        )['count'] : null,
+                    ];
                 }
+            } else {
+                $data['data'] = 'Incorrect data received';
+            }
 
-                // Instantiate the synchronous JSON:API Client
-                $client = new JsonApiClient($guzzleClient);
+            $data['statusCode'] = $response->getStatusCode();
+            $data['statusText'] = $response->getReasonPhrase();
 
-                // Send the request synchronously to retrieve the response
-                $response = $client->sendRequest($request);
+            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $data['statusCode'], $data['statusText']);
+            }
 
-                $resource = config("cms.types.{$type}");
-
-                if ($resource && $response->isSuccessfulDocument([200, 202])) {
-                    // Hydrate the document to an stdClass
-                    $hydrator = new ClassDocumentHydrator();
-                    $hydratedData = $hydrator->hydrate($response->document());
-
-                    if (empty($hydratedData)) {
-                        $data['statusCode'] = 404;
-                        $data['statusText'] = 'Page not found';
-
-                        return $data;
-                    }
-
-                    if ($slug) {
-                        // Set content-type detail based on type and slug
-                        $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
-                    } else {
-                        // Set content-type collection page based on type
-                        // $page = self::getContentType($api_request, $locale, 'pages', trans("routes.{$type}"));
-                        // $data['page'] = ($page->getStatusCode() == 200) ? $page->getData()->data : null;
-
-                        // Set content-type collection
-                        $data['data'] = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
-
-                        // Set paging properties
-                        $data['pagination'] = [
-                            'page' => $page,
-                            'limit' => $page_limit,
-                            'total' => $response->document()->hasMeta() ? (int) $response->document()->meta(
-                            )['count'] : null,
-                        ];
-                    }
-                } else {
-                    $data['data'] = 'Incorrect data received';
-                }
-
-                $data['statusCode'] = $response->getStatusCode();
-                $data['statusText'] = $response->getReasonPhrase();
-
-                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $data['statusCode'], $data['statusText']);
-                }
-
-                return $data;
-            },
-            [$type]
-        );
+            return $data;
+        }, [$type]);
 
         return new JsonResponse($data, $data['statusCode']);
     }
@@ -312,133 +269,99 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return resource collection
      */
-    public static function getContentType(
-        Request $api_request,
-        string $locale,
-        string $type,
-        string $slug = null
-    ) {
-        $cache_id = hash(
-            'sha256',
-            implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())]))
-        );
-        $data = CacheContent::remember(
-            $cache_id,
-            function () use ($api_request, $locale, $type, $slug) {
-                $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
+    public static function getContentType(Request $api_request, string $locale, string $type, string $slug = null)
+    {
+        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
+        $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
+            $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
-                $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get(
-                    'page'
-                ) : 1;
-                $page_limit = (int) config('cms.pagination.limit');
+            $query = [];
 
-                $query = [
-                    'page' => [
-                        'offset' => ($page - 1) * $page_limit,
-                        'limit' => $page_limit,
-                    ],
-                ];
+            if ($slug) { // show content-type based on slug
+                $path = '/' . $slug;
 
-                if ($slug) { // show content-type based on slug
-                    $path = '/' . $slug;
-                    if ($type !== 'pages') {
-                        $path = '/' . trans("routes.{$type}") . $path;
-                    }
-
-                    $query['filter']['field_path'] = [
-                        'value' => $path,
-                    ];
-                } else { // show content-type index
-                    if ($api_request->has('contributor') && is_numeric($api_request->get('contributor'))) {
-                        $query['filter']['contributor.drupal_internal__nid'] = [
-                            'value' => $api_request->get('contributor'),
-                        ];
-                    }
-
-                    if ($api_request->has('promote') && in_array(
-                            $api_request->get('promote'),
-                            ['true', 'false'],
-                            true
-                        )) {
-                        $query['filter']['promote'] = [
-                            'value' => ($api_request->get('promote') === 'true'),
-                        ];
-                    }
-
-                    if ($api_request->has('promote_overview') && in_array(
-                            $api_request->get('promote_overview'),
-                            ['true', 'false'],
-                            true
-                        )) {
-                        $query['filter']['promote_overview'] = [
-                            'value' => ($api_request->get('promote_overview') === 'true'),
-                        ];
-                    }
-
-                    if ($api_request->has('sticky') && in_array($api_request->get('sticky'), ['true', 'false'], true)) {
-                        $query['filter']['sticky'] = [
-                            'value' => ($api_request->get('sticky') === 'true'),
-                        ];
-                    }
-
-                    $query['sort'] = '-sticky,-publish_date,title';
+                if ($type !== 'pages') {
+                    $path = '/' . trans("routes.{$type}") . $path;
                 }
 
-                $query = http_build_query($query);
+                $query['filter']['field_path'] = [
+                    'value' => $path,
+                ];
+            } else { // show content-type index
+                if ($api_request->has('promote') && in_array($api_request->get('promote'), ['true', 'false'], true)) {
+                    $query['filter']['promote'] = [
+                        'value' => ($api_request->get('promote') === 'true'),
+                    ];
+                }
 
-                $request_url = new Uri(
-                    config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
-                );
+                if ($api_request->has('promote_overview') && in_array($api_request->get('promote_overview'), ['true', 'false'], true)) {
+                    $query['filter']['promote_overview'] = [
+                        'value' => ($api_request->get('promote_overview') === 'true'),
+                    ];
+                }
 
-                $request = new OutgoingRequest('GET', $request_url);
-                $request = $request
+                if ($api_request->has('sticky') && in_array($api_request->get('sticky'), ['true', 'false'], true)) {
+                    $query['filter']['sticky'] = [
+                        'value' => ($api_request->get('sticky') === 'true'),
+                    ];
+                }
+
+                $query['sort'] = '-sticky,-publish_date,title';
+            }
+
+            $query = http_build_query($query);
+
+            $request_url = new Uri(
+                config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
+            );
+
+            $request = new OutgoingRequest('GET', $request_url);
+            $request = $request
                     ->withProtocolVersion('1.1')
                     ->withHeader('Accept', 'application/vnd.api+json')
                     ->withHeader('Content-Type', 'application/vnd.api+json');
 
-                // Instantiate the Guzzle HTTP Client
-                if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            // Instantiate the Guzzle HTTP Client
+            if (in_array(config('app.env'), ['local', 'test'])) {
+                $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            } else {
+                $guzzleClient = G7Client::createWithConfig([]);
+            }
+
+            // Instantiate the synchronous JSON:API Client
+            $client = new JsonApiClient($guzzleClient);
+
+            // Send the request synchronously to retrieve the response
+            $response = $client->sendRequest($request);
+
+            $resource = config("cms.types.{$type}");
+
+            if ($resource && $response->isSuccessfulDocument([200, 202])) {
+                // Hydrate the document to an stdClass
+                $hydrator = new ClassDocumentHydrator();
+                $hydratedData = $hydrator->hydrate($response->document());
+
+                if (empty($hydratedData)) {
+                    return null;
+                }
+
+                if ($slug) {
+                    // Set content-type detail based on type and slug
+                    $data = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                 } else {
-                    $guzzleClient = G7Client::createWithConfig([]);
+                    // Set content-type collection
+                    $data = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
                 }
 
-                // Instantiate the synchronous JSON:API Client
-                $client = new JsonApiClient($guzzleClient);
+                return $data;
+            }
 
-                // Send the request synchronously to retrieve the response
-                $response = $client->sendRequest($request);
+            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            }
 
-                $resource = config("cms.types.{$type}");
-
-                if ($resource && $response->isSuccessfulDocument([200, 202])) {
-                    // Hydrate the document to an stdClass
-                    $hydrator = new ClassDocumentHydrator();
-                    $hydratedData = $hydrator->hydrate($response->document());
-
-                    if (empty($hydratedData)) {
-                        return null;
-                    }
-
-                    if ($slug) {
-                        // Set content-type detail based on type and slug
-                        $data = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
-                    } else {
-                        // Set content-type collection
-                        $data = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
-                    }
-
-                    return $data;
-                }
-
-                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
-                }
-
-                return null;
-            },
-            [$type]
-        );
+            return null;
+        }, [$type]);
 
         return $data;
     }
@@ -446,69 +369,59 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data based on cutom query and return resource collection
      */
-    public static function getContentTypeByQuery(
-        array $query,
-        string $locale,
-        string $type
-    ): ?AnonymousResourceCollection {
-        $cache_id = hash(
-            'sha256',
-            implode('.', array_filter([$locale, $type, http_build_query($query)]))
-        );
-        $data = CacheContent::remember(
-            $cache_id,
-            function () use ($query, $locale, $type) {
-                if (!array_key_exists('sort', $query)) {
-                    $query['sort'] = '-sticky,-publish_date,title';
-                }
+    public static function getContentTypeByQuery(array $query, string $locale, string $type): ?AnonymousResourceCollection
+    {
+        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, http_build_query($query)])));
+        $data = CacheContent::remember($cache_id, function () use ($query, $locale, $type) {
+            if (!array_key_exists('sort', $query)) {
+                $query['sort'] = '-sticky,-publish_date,title';
+            }
 
-                $query = http_build_query($query);
+            $query = http_build_query($query);
 
-                $request_url = new Uri(
-                    config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
-                );
+            $request_url = new Uri(
+                config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '?' . $query
+            );
 
-                $request = new OutgoingRequest('GET', $request_url);
-                $request = $request
+            $request = new OutgoingRequest('GET', $request_url);
+            $request = $request
                     ->withProtocolVersion('1.1')
                     ->withHeader('Accept', 'application/vnd.api+json')
                     ->withHeader('Content-Type', 'application/vnd.api+json');
 
-                // Instantiate the Guzzle HTTP Client
-                if (in_array(config('app.env'), ['local', 'test'])) {
-                    $guzzleClient = G7Client::createWithConfig(['verify' => false]);
-                } else {
-                    $guzzleClient = G7Client::createWithConfig([]);
+            // Instantiate the Guzzle HTTP Client
+            if (in_array(config('app.env'), ['local', 'test'])) {
+                $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+            } else {
+                $guzzleClient = G7Client::createWithConfig([]);
+            }
+
+            // Instantiate the synchronous JSON:API Client
+            $client = new JsonApiClient($guzzleClient);
+
+            // Send the request synchronously to retrieve the response
+            $response = $client->sendRequest($request);
+
+            $resource = config("cms.types.{$type}");
+
+            if ($resource && $response->isSuccessfulDocument([200, 202])) {
+                // Hydrate the document to an stdClass
+                $hydrator = new ClassDocumentHydrator();
+                $hydratedData = $hydrator->hydrate($response->document());
+
+                if (empty($hydratedData)) {
+                    return null;
                 }
 
-                // Instantiate the synchronous JSON:API Client
-                $client = new JsonApiClient($guzzleClient);
+                return $resource::collection($hydratedData);
+            }
 
-                // Send the request synchronously to retrieve the response
-                $response = $client->sendRequest($request);
+            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            }
 
-                $resource = config("cms.types.{$type}");
-
-                if ($resource && $response->isSuccessfulDocument([200, 202])) {
-                    // Hydrate the document to an stdClass
-                    $hydrator = new ClassDocumentHydrator();
-                    $hydratedData = $hydrator->hydrate($response->document());
-
-                    if (empty($hydratedData)) {
-                        return null;
-                    }
-
-                    return $resource::collection($hydratedData);
-                }
-
-                if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                    \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
-                }
-
-                return null;
-            },
-            [$type]
-        );
+            return null;
+        }, [$type]);
 
         return $data;
     }
@@ -528,7 +441,6 @@ class DataService
             'filter' => [
                 'langcode' => [
                     'value' => $locale,
-                    // Todo: je kunt nog steed een nl pagina opvragen op bijv. engelse slug --> CHECK!
                 ],
                 'datefilter' => [
                     'condition' => [
