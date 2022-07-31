@@ -29,6 +29,16 @@ class DrupalController extends Controller
     }
 
     /**
+     * Load data for settings
+     */
+    public function getSettings(Request $request, string $locale): JsonResponse
+    {
+        $dataservice = new DataService();
+
+        return $dataservice->getSettings($request, $locale);
+    }
+
+    /**
      * Load data for menu
      */
     public function getMenu(Request $request, string $locale, string $type): JsonResponse

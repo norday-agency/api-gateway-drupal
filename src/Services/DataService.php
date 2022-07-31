@@ -74,10 +74,68 @@ class DataService
         return $data;
     }
 
+    public function getSettings(Request $api_request, string $locale)
+    {
+        $cache_id = hash('sha256', "{$locale}.settings");
+        $data = CacheContent::remember($cache_id, function () use ($api_request, $locale) {
+            $settings = [];
+
+            foreach (config('cms.navigation') as $container => $menus) {
+                foreach ($menus as $menu) {
+                    $settings['navigation'][$container][$menu] = $this->getMenu($api_request, $locale, "{$container}-{$menu}");
+                }
+            }
+
+            return $settings;
+        }, ['settings']);
+
+        return new JsonResponse($data);
+    }
+
+    private function getMenu(Request $api_request, string $locale, string $type)
+    {
+        $client = new GuzzleClient();
+
+        $request = [
+            'headers' => [
+                'Accept' => 'application/hal+json',
+                'Content-Type' => 'application/hal+json',
+            ],
+        ];
+
+        $request_url = new Uri(
+            config('cms.url') . '/' . $locale . config(
+                'cms.endpoint'
+            ) . '/menu_items/' . $type . '?locale=' . $locale
+        );
+
+        $response = $client->request('GET', $request_url, $request);
+
+        if ($response->getStatusCode() == 200) {
+            $result = json_decode((string) $response->getBody());
+
+            if (empty($result)) {
+                return null;
+            }
+
+            return collect($result)->map(function ($link) {
+                $url = $link->relative;
+                if (substr($url, 0, 3) === '/nl') {
+                    $url = str_replace('/nl', '', $url);
+                }
+                $link->relative = $url;
+
+                return $link;
+            });
+        }
+
+        return null;
+    }
+
     /**
      * Call Drupal REST API for menu data
      */
-    public static function getMenu(Request $api_request, string $locale, string $type): JsonResponse
+    public static function getMenuJson(Request $api_request, string $locale, string $type): JsonResponse
     {
         $cache_id = hash('sha256', "{$locale}.menu.{$type}");
         $data = CacheContent::remember($cache_id, function () use ($locale, $type) {
