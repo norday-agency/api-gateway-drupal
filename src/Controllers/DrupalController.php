@@ -16,7 +16,7 @@ class DrupalController extends Controller
      *
      * @return void
      */
-    public function handleForm(Request $request, string $locale, string $id)
+    public function handleForm(Request $request, string $locale, string $id) // Todo: check if still used
     {
         if ($settings = DataService::getParagraphType($request, $locale, $id)) {
             $class = config('forms.types.' . $settings->form_type);
