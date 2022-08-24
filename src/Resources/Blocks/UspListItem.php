@@ -18,7 +18,7 @@ class UspListItem extends JsonResource
         return [
             'title' => $this->title,
             'description' => $this->description,
-            'link' => new Link($this->link),
+            'link' => isset($this->link) ? new Link($this->link) : null,
             'image' => isset($this->image) ? new DefaultImage($this->image) : null,
 
         ];
