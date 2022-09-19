@@ -10,6 +10,7 @@ use Http\Adapter\Guzzle7\Client as G7Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Collection;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
@@ -118,18 +119,28 @@ class DataService
                 return null;
             }
 
-            return collect($result)->map(function ($link) {
-                $url = $link->relative;
-                if (substr($url, 0, 3) === '/nl') {
-                    $url = str_replace('/nl', '', $url);
-                }
-                $link->relative = $url;
-
-                return $link;
-            });
+            return $this->formatMenuLink($result);
         }
 
         return null;
+    }
+
+    private function formatMenuLink(?array $items): Collection
+    {
+        return collect($items)->map(function ($link) {
+            // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
+            $url = $link->relative;
+            if (substr($url, 0, 3) === '/nl') {
+                $url = str_replace('/nl', '', $url);
+            }
+            $link->relative = $url;
+
+            if (array_key_exists('below', $link)) {
+                $link->below = $this->formatMenuLink($link->below);
+            }
+
+            return $link;
+        });
     }
 
     /**
