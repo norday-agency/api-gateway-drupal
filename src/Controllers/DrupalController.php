@@ -7,7 +7,8 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use IN10\ApiGatewayDrupal\Services\DataService;
-use Laravelium\Sitemap\Sitemap;
+
+use Illuminate\Support\Facades\Cache;
 
 class DrupalController extends Controller
 {
@@ -59,35 +60,51 @@ class DrupalController extends Controller
     /**
      * Load drupal complete sitemap
      */
-    public function getSitemap(Request $request, Sitemap $sitemap)
+    public function getSitemap(Request $request)
     {
-        $sitemap->setCache('sitemap', 3600);
+        $cacheKey = "items";
 
-        if (!$sitemap->isCached()) {
-            foreach (config('app.supported_locales') as $locale) {
-                foreach (array_keys(config('cms.types')) as $type) {
-                    $page = 1;
+        Cache::remember($cacheKey, 3600, function() use (&$request){
+          return $this->fillMap($request);
+        });
+    
+        return response()->view('api-gateway-drupal::sitemap', [
+            'posts' =>  Cache::get( $cacheKey)
+        ])->header('Content-Type', 'text/xml');
 
-                    while (1) {
-                        if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
-                            $data->each(function ($item) use ($locale, $sitemap) {
-                                $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
-                                if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
-                                    $lastModified = $item->edit_date;
-                                    $sitemap->add($url, $lastModified, '1.0', 'weekly');
-                                }
-                            });
-                        } else {
-                            break;
-                        }
+    }
 
-                        ++$page;
-                    }
-                }
-            }
+    private function formatDate($carbonObject) {
+      if($carbonObject instanceof \Illuminate\Support\Carbon  or $carbonObject instanceof \Carbon\Carbon) {
+        return $carbonObject->tz('Europe/Berlin')->format('Y-m-d\Th:i:sP');
+      }
+    }
+  
+    private function fillMap($request){
+      $items = [];
+      foreach (config('app.supported_locales') as $locale) {
+        foreach (array_keys(config('cms.types')) as $type) {
+          $page = 1;
+            
+          while (1) {
+              if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
+                $data->each(function ($item) use ($locale, &$items) {
+                  $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
+                  if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
+                      $lastModified = $item->edit_date;
+
+                      $items[] = [$url, $this->formatDate($lastModified), 1.0, 'weekly'];
+                  }
+                });
+              } else {
+                  break;
+              }
+
+              $page++;
+          }   
         }
-
-        return $sitemap->render('xml');
+      }
+      return $items;
     }
 
     private function fetchPageForType(int $page = 1, Request $request, $locale, $type)
