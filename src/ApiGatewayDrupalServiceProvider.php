@@ -25,7 +25,7 @@ class ApiGatewayDrupalServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
-        $this->loadViewsFrom(__DIR__ . '/resources/views', 'api-gateway-drupal');
+        $this->loadViewsFrom(__DIR__ . '/Resources/views', 'api-gateway-drupal');
         $this->publishes(
             [
                 __DIR__ . '/config/cms.php' => config_path('cms.php'),
