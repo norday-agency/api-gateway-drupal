@@ -1,7 +1,8 @@
 <?php
 
 // Sitemap
-Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap');
+Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap')->name('api-gateway-drupal::sitemap');
+
 
 // Clear cache
 Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
