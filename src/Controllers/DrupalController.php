@@ -3,6 +3,7 @@
 namespace IN10\ApiGatewayDrupal\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use IN10\ApiGatewayDrupal\Services\DataService;
@@ -16,7 +17,7 @@ class DrupalController extends Controller
      *
      * @return void
      */
-    public function handleForm(Request $request, string $locale, string $id)
+    public function handleForm(Request $request, string $locale, string $id) // Todo: check if still used
     {
         if ($settings = DataService::getParagraphType($request, $locale, $id)) {
             $class = config('forms.types.' . $settings->form_type);
@@ -29,11 +30,21 @@ class DrupalController extends Controller
     }
 
     /**
+     * Load data for settings
+     */
+    public function getSettings(Request $request, string $locale): JsonResponse
+    {
+        $dataservice = new DataService();
+
+        return $dataservice->getSettings($request, $locale);
+    }
+
+    /**
      * Load data for menu
      */
     public function getMenu(Request $request, string $locale, string $type): JsonResponse
     {
-        return DataService::getMenu($request, $locale, $type);
+        return DataService::getMenuJson($request, $locale, $type);
     }
 
     /**
@@ -103,7 +114,7 @@ class DrupalController extends Controller
         if ($data = DataService::getContentType($request, $locale, $type)) {
             return $data;
         } else {
-            return NULL;
+            return null;
         }
-    }   
+    }
 }

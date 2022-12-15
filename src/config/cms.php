@@ -1,18 +1,26 @@
 <?php
 
+use IN10\ApiGatewayDrupal\Resources\News;
+use IN10\ApiGatewayDrupal\Resources\Page;
+
 return [
-    'url' => env('DRUPAL_URL'),
-    'endpoint' => env('DRUPAL_ENDPOINT'),
+    'url' => env('CMS_URL'),
+    'endpoint' => env('CMS_ENDPOINT'),
     'types' => [
-        //'pages' => Page::class,
+        'news' => News::class,
+        'pages' => Page::class,
+    ],
+    'navigation' => [
+        'header' => ['primary'],
+        'footer' => ['primary'],
     ],
     'pagination' => [
-        'limit' => env('DRUPAL_PAGINATION_LIMIT', 9),
+        'limit' => env('CMS_PAGINATION_LIMIT', 12),
     ],
-    'oauth' => [
-        'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
-        'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
-        'apiScope' => env('DRUPAL_OAUTH_SCOPE')
-    ],
-    'securedPaths' => explode(',', env('DRUPAL_SECURED_PATHS'))
+    // 'oauth' => [
+    //     'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
+    //     'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
+    //     'apiScope' => env('DRUPAL_OAUTH_SCOPE')
+    // ],
+    // 'securedPaths' => explode(',', env('DRUPAL_SECURED_PATHS'))
 ];
