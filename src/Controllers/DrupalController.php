@@ -87,5 +87,6 @@ class DrupalController extends Controller
             return $data;
         } else {
             return NULL;
-       
+        }
+    }   
 }
