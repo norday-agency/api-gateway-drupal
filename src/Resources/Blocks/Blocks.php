@@ -31,9 +31,9 @@ class Blocks extends JsonResource
         }
 
         $block = Str::studly($type);
-        $resource = '\IN10\ApiGatewayDrupal\Resources\Blocks\\' . $block;
+        $resource = '\\App\\Http\\Resources\\Blocks\\' . $block;
         if (!class_exists($resource, true)) {
-            $resource = '\\App\\Http\\Resources\\Blocks\\' . $block;
+            $resource = '\IN10\ApiGatewayDrupal\Resources\Blocks\\' . $block;
         }
 
         $component['content'] = new $resource($this);
