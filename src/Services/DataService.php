@@ -131,8 +131,8 @@ class DataService
         return collect($items)->map(function ($link) {
             // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
             $url = $link->relative;
-            if (substr($url, 0, 3) === '/nl') {
-                $url = str_replace('/nl', '', $url);
+            if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
+                $url = str_replace('/' . config('app.base_locale', 'nl'), '', $url);
             }
             $link->relative = $url;
 

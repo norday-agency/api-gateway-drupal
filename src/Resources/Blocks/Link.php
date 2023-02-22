@@ -15,10 +15,9 @@ class Link extends JsonResource
      */
     public function toArray($request)
     {
-        // Todo: get default locale from env for removing default locale in urls
         $url = $this->link['options']['url'];
-        if (substr($url, 0, 3) === '/nl') {
-            $url = str_replace('/nl', '', $url);
+        if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
+            $url = str_replace('/' . config('app.base_locale', 'nl'), '', $url);
         }
 
         return [

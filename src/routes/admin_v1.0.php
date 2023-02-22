@@ -9,7 +9,7 @@ Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSi
 Route::group(
     [
         'prefix' => '{locale}',
-        'where' => ['locale' => '(nl|en)'],
+        'where' => ['locale' => config('cms.supported_locales', '(nl|en)')],
     ],
     function () {
         // Global settins

@@ -94,7 +94,7 @@ class DrupalController extends Controller
                 while (1) {
                     if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
                         $data->each(function ($item) use ($locale, &$items) {
-                            $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
+                            $url = config('app.website_url') . (($locale === config('app.base_locale', 'nl')) ? $item->slug : '/' . $locale . $item->slug);
                             if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
                                 $lastModified = $item->edit_date;
 
