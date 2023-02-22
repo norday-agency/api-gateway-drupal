@@ -3,6 +3,7 @@
 namespace IN10\ApiGatewayDrupal\Services;
 
 use Carbon\Carbon;
+use Drupal\media\OEmbed\Resource;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
@@ -135,8 +136,8 @@ class DataService
             }
             $link->relative = $url;
 
-            //$link is object > cast to array else error
-            if (array_key_exists('below', (array)$link)) {
+            // $link is object > cast to array else error
+            if (array_key_exists('below', (array) $link)) {
                 $link->below = $this->formatMenuLink($link->below);
             }
 
@@ -192,6 +193,68 @@ class DataService
 
             return $data;
         }, ['menus']);
+
+        return new JsonResponse($data, $data['statusCode']);
+    }
+
+    /**
+     * Call Drupal JSON API for contenttype data Preview call
+     */
+    public static function getContentTypePreviewJson(Request $api_request, string $locale, string $type): JsonResponse
+    {
+        $id = $api_request->get('nid');
+
+        $query = ['resourceVersion' => 'id:' . $api_request->get('rid')];
+        if ($api_request->get('rid') === 'working-copy') {
+            $query = ['resourceVersion' => 'rel:working-copy'];
+        }
+
+        $query = http_build_query($query);
+
+        $request_url = new Uri(
+            config('cms.url') . '/' . $locale . config('cms.endpoint') . '/' . $type . '/' . $id . '?' . $query
+        );
+
+        $request = new OutgoingRequest('GET', $request_url);
+        $request = $request
+                ->withProtocolVersion('1.1')
+                ->withHeader('Accept', 'application/vnd.api+json')
+                ->withHeader('Content-Type', 'application/vnd.api+json');
+
+        // Instantiate the Guzzle HTTP Client
+        if (in_array(config('app.env'), ['local', 'test'])) {
+            $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+        } else {
+            $guzzleClient = G7Client::createWithConfig([]);
+        }
+
+        // Instantiate the synchronous JSON:API Client
+        $client = new JsonApiClient($guzzleClient);
+
+        // Send the request synchronously to retrieve the response
+        $response = $client->sendRequest($request);
+
+        $resource = config("cms.types.{$type}");
+
+        if ($resource && $response->isSuccessfulDocument([200, 202])) {
+            // Hydrate the document to an stdClass
+            $hydrator = new ClassDocumentHydrator();
+            $hydratedData = $hydrator->hydrate($response->document());
+
+            if (empty($hydratedData)) {
+                $data['statusCode'] = 404;
+                $data['statusText'] = 'Page not found';
+
+                return new JsonResponse($data, $data['statusCode']);
+            }
+
+            $data['data'] = new $resource($hydratedData[0], true);
+        } else {
+            $data['data'] = 'Incorrect data received';
+        }
+
+        $data['statusCode'] = $response->getStatusCode();
+        $data['statusText'] = $response->getReasonPhrase();
 
         return new JsonResponse($data, $data['statusCode']);
     }
