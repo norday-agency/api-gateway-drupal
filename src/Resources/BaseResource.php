@@ -5,6 +5,7 @@ namespace IN10\ApiGatewayDrupal\Resources;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 use IN10\ApiGatewayDrupal\Resources\Blocks\DefaultImage;
+use IN10\ApiGatewayDrupal\Services\TranslationService;
 
 class BaseResource extends JsonResource
 {
@@ -43,6 +44,7 @@ class BaseResource extends JsonResource
             'nid' => $resource->drupal_internal__nid,
             'slug' => $resource->slug,
             'endpoint' => '/' . $resource->langcode . $resource->slug,
+            'translations' => TranslationService::get($resource->langcode, $this->formatType($resource->type), $resource->slug),
             'title' => $resource->title,
             'content' => html_entity_decode($resource->content['value'] ?? ''),
             'meta' => [
