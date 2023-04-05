@@ -299,7 +299,7 @@ class DataService
             if ($slug) { // show content-type based on slug
                 $path = '/' . $slug;
 
-                if ($type !== 'pages' && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                if (!in_array($type,  ['pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
