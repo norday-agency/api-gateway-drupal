@@ -50,21 +50,6 @@ class RedirectService
                 ];
                 return new JsonResponse($redirect, 307);
             }
-            // maintenance partners
-            if ($globalSettings[0]->maintenance_partners && in_array(
-                    substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config(
-                        'admin.maintenance_partners.redirects'
-                    )
-                )) {
-                $redirect = [
-                    "language" => "nl",
-                    "source" => $redirect_path,
-                    "url" => config("admin.maintenance_partners.redirect_url"),
-                    "statusCode" => "307"
-                ];
-                return new JsonResponse($redirect, 307);
-            }
         }
 
         $query = [
