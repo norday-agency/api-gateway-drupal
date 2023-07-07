@@ -184,7 +184,7 @@ class DataService
 
                 if ($slug) { // show content-type based on slug
                     $path = '/' . $slug;
-                    $query['filter']['field_path'] = [
+                    $query['filter']['slug'] = [
                         'value' => $path,
                     ];
                 } else { // show content-type index
