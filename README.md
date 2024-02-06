@@ -8,7 +8,7 @@ There are a few steps to go through to be able to use everything this package ha
 
 ```
 'supported_locales' => ['nl', 'en'],
-'base_locale' => ['nl'],
+'base_locale' => 'nl',
 ``` 
 
 * Add the following to your projects composer file
