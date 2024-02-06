@@ -2,6 +2,7 @@
 
 use IN10\ApiGatewayDrupal\Resources\News;
 use IN10\ApiGatewayDrupal\Resources\Page;
+use IN10\ApiGatewayDrupal\Resources\Story;
 
 return [
     'url' => env('CMS_URL'),
@@ -9,6 +10,7 @@ return [
     'types' => [
         'news' => News::class,
         'pages' => Page::class,
+        'stories' => Story::class,
     ],
     'navigation' => [
         'header' => ['primary'],
