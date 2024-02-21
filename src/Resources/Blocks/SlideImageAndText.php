@@ -23,7 +23,6 @@ class SlideImageAndText extends JsonResource
             'image' => isset($this->image) ? new DefaultImage($this->image) : null,
             'image_padding' => isset($this->image_padding) ? !$this->image_padding : true,
             'align_image_bottom' => isset($this->align_image_bottom) ? $this->align_image_bottom : false,
-            'is_icon' => isset($this->is_icon) ? $this->is_icon : false,
             'theme' => isset($this->theme) ? $this->theme : null,
         ];
     }
