@@ -33,6 +33,9 @@ class TranslationService
         $query['filter']['field_path'] = [
             'value' => $slug,
         ];
+        
+        // only get high level node data to keep performance up
+        $query['include']= '';
 
         $query = http_build_query($query);
 
