@@ -21,10 +21,10 @@ class Story extends BaseResource
 
         $data = [
             'description' => isset($this->description) ? $this->description : '',
-            'related_story' => isset($this->related_story) ? new Story($this->related_story) : null,
         ];
 
         if ($this->detail_view === true) {
+            $data['related_story'] = isset($this->related_story) ? new Story($this->related_story) : null;
             $data['storycards'] = isset($this->storycards) ? Storycards::collection($this->storycards) : [];
         }
 
