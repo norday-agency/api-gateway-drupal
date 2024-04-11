@@ -20,6 +20,14 @@ Route::group(
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
+            Route::group(
+                [
+                    'prefix' => 'component',
+                ],
+                function () {
+                    Route::get('{type}/{id}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getComponent')->name('component');
+                }
+            );
             foreach (array_keys(config('cms.types')) as $type) {
                 Route::prefix(trans("routes.{$type}", [], $language))->group(
                     function () use ($type) {

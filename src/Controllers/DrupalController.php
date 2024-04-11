@@ -61,6 +61,11 @@ class DrupalController extends Controller
         return DataService::getContentTypeJson($request, $locale, $type, $slug);
     }
 
+    public function getComponent(Request $request, string $locale, string $type, string $id): JsonResponse
+    {
+        return DataService::getComponent($request, $locale, $type, $id);
+    }
+
     /**
      * Load drupal complete sitemap
      */
@@ -79,7 +84,7 @@ class DrupalController extends Controller
 
     private function formatDate($carbonObject)
     {
-        if ($carbonObject instanceof \Illuminate\Support\Carbon or $carbonObject instanceof \Carbon\Carbon) {
+        if ($carbonObject instanceof \Illuminate\Support\Carbon or $carbonObject instanceof Carbon) {
             return $carbonObject->tz('Europe/Berlin')->format('Y-m-d\Th:i:sP');
         }
     }

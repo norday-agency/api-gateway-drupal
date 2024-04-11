@@ -16,8 +16,14 @@ class RelatedNews extends JsonResource
      */
     public function toArray($request)
     {
+        if (isset($this->related_items)) {
+            return [
+                'items' => News::collection($this->related_items),
+            ];
+        }
+
         return [
-            'items' => (isset($this->related_items)) ? News::collection($this->related_items) : [],
+            'fetch' => 'true', // Todo: check if this good practice
         ];
     }
 }

@@ -12,15 +12,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
 class DataService
 {
-    public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
+    public static function getComponent(Request $api_request, string $locale, string $type, string $id): JsonResponse
     {
-        $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
-        $data = CacheContent::remember($cache_id, function () use ($locale, $id) {
+        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $id])));
+        $data = CacheContent::remember($cache_id, function () use ($locale, $type, $id) {
             $query = [
                 'filter' => [
                     'langcode' => [
@@ -34,7 +35,7 @@ class DataService
             $request_url = new Uri(
                 config('cms.url') . '/' . $locale . config(
                     'cms.endpoint'
-                ) . '/paragraph/component_form/' . $id . '?' . $query
+                ) . '/component/' . $type . '/' . $id . '?' . $query
             );
 
             $request = new OutgoingRequest('GET', $request_url);
@@ -62,19 +63,95 @@ class DataService
                 $hydratedData = $hydrator->hydrate($response->document());
 
                 if (empty($hydratedData)) {
-                    return null;
+                    $data['statusCode'] = 404;
+                    $data['statusText'] = 'Page not found';
+
+                    return $data;
                 }
 
-                return $hydratedData[0];
-            } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+                $block = Str::studly($type);
+                $resource = '\\App\\Http\\Resources\\Blocks\\' . $block;
+                if (!class_exists($resource, true)) {
+                    $resource = '\IN10\ApiGatewayDrupal\Resources\Blocks\\' . $block;
+                }
+
+                $data['data'] = new $resource($hydratedData[0]);
+            } else {
+                $data['data'] = 'Incorrect data received';
             }
 
-            return null;
-        }, ['paragraphs']);
+            $data['statusCode'] = $response->getStatusCode();
+            $data['statusText'] = $response->getReasonPhrase();
 
-        return $data;
+            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $data['statusCode'], $data['statusText']);
+            }
+
+            return $data;
+        }, ['components']);
+
+        return new JsonResponse($data, $data['statusCode']);
     }
+
+    // Todo: check if still used!
+    // public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
+    // {
+    //     $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
+    //     $data = CacheContent::remember($cache_id, function () use ($locale, $id) {
+    //         $query = [
+    //             'filter' => [
+    //                 'langcode' => [
+    //                     'value' => $locale,
+    //                 ],
+    //             ],
+    //         ];
+
+    //         $query = http_build_query($query);
+
+    //         $request_url = new Uri(
+    //             config('cms.url') . '/' . $locale . config(
+    //                 'cms.endpoint'
+    //             ) . '/paragraph/component_form/' . $id . '?' . $query
+    //         );
+
+    //         $request = new OutgoingRequest('GET', $request_url);
+    //         $request = $request
+    //         ->withProtocolVersion('1.1')
+    //         ->withHeader('Accept', 'application/vnd.api+json')
+    //         ->withHeader('Content-Type', 'application/vnd.api+json');
+
+    //         // Instantiate the Guzzle HTTP Client
+    //         if (in_array(config('app.env'), ['local', 'test'])) {
+    //             $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+    //         } else {
+    //             $guzzleClient = G7Client::createWithConfig([]);
+    //         }
+
+    //         // Instantiate the synchronous JSON:API Client
+    //         $client = new JsonApiClient($guzzleClient);
+
+    //         // Send the request synchronously to retrieve the response
+    //         $response = $client->sendRequest($request);
+
+    //         if ($response->isSuccessfulDocument([200, 202])) {
+    //             // Hydrate the document to an stdClass
+    //             $hydrator = new ClassDocumentHydrator();
+    //             $hydratedData = $hydrator->hydrate($response->document());
+
+    //             if (empty($hydratedData)) {
+    //                 return null;
+    //             }
+
+    //             return $hydratedData[0];
+    //         } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+    //             \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+    //         }
+
+    //         return null;
+    //     }, ['paragraphs']);
+
+    //     return $data;
+    // }
 
     public function getSettings(Request $api_request, string $locale)
     {
@@ -262,7 +339,7 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return JsonResponse
      */
-    public static function getContentTypeJson(Request $api_request, string $locale, string $type, string $slug = null): JsonResponse
+    public static function getContentTypeJson(Request $api_request, string $locale, string $type, ?string $slug = null): JsonResponse
     {
         // Check for redirect in Drupal
         if ($slug && $redirect = RedirectService::check($locale, $type, $slug)) {
@@ -299,7 +376,7 @@ class DataService
             if ($slug) { // show content-type based on slug
                 $path = '/' . $slug;
 
-                if (!in_array($type,  ['pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                if (!in_array($type, ['pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
@@ -402,7 +479,7 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return resource collection
      */
-    public static function getContentType(Request $api_request, string $locale, string $type, string $slug = null)
+    public static function getContentType(Request $api_request, string $locale, string $type, ?string $slug = null)
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
