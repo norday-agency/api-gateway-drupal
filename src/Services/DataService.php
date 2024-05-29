@@ -300,7 +300,7 @@ class DataService
                 $path = '/' . $slug;
 
                 // todo: make this dynamic through config
-                if (!in_array($type,  ['pages', 'pages_site', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                if (!in_array($type,  ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
