@@ -182,6 +182,10 @@ class DataService
             ],
         ];
 
+        if (config('cms.navigation-per-language')) {
+            $type = $type . '-' . $locale;
+        }
+
         $request_url = new Uri(
             config('cms.url') . '/' . $locale . config(
                 'cms.endpoint'
@@ -376,7 +380,8 @@ class DataService
             if ($slug) { // show content-type based on slug
                 $path = '/' . $slug;
 
-                if (!in_array($type, ['pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                // todo: make this dynamic through config
+                if (!in_array($type,  ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
