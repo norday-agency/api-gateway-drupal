@@ -12,6 +12,7 @@ return [
         'pages' => Page::class,
         'stories' => Story::class,
     ],
+    'navigation-per-language' => false, // true if you want to have a different navigation per language in the CMS
     'navigation' => [
         'header' => ['primary'],
         'footer' => ['primary'],

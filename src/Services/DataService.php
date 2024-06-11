@@ -105,6 +105,10 @@ class DataService
             ],
         ];
 
+        if (config('cms.navigation-per-language')) {
+            $type = $type . '-' . $locale;
+        }
+
         $request_url = new Uri(
             config('cms.url') . '/' . $locale . config(
                 'cms.endpoint'
