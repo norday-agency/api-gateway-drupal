@@ -266,7 +266,7 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return JsonResponse
      */
-    public static function getContentTypeJson(Request $api_request, string $locale, string $type, string $slug = null): JsonResponse
+    public static function getContentTypeJson(Request $api_request, string $locale, string $type, ?string $slug = null): JsonResponse
     {
         // Check for redirect in Drupal
         if ($slug && $redirect = RedirectService::check($locale, $type, $slug)) {
@@ -300,11 +300,14 @@ class DataService
                 ],
             ];
 
+            if ($default_query = config('cms.default_query')) {
+                $query['filter'] = array_merge($query['filter'], $default_query['filter']);
+            }
+
             if ($slug) { // show content-type based on slug
                 $path = '/' . $slug;
 
-                // todo: make this dynamic through config
-                if (!in_array($type,  ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                if (!in_array($type, ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
@@ -407,7 +410,7 @@ class DataService
     /**
      * Call Drupal JSON API for contenttype data and return resource collection
      */
-    public static function getContentType(Request $api_request, string $locale, string $type, string $slug = null)
+    public static function getContentType(Request $api_request, string $locale, string $type, ?string $slug = null)
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
