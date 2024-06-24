@@ -94,7 +94,7 @@ class DataService
         return new JsonResponse($data);
     }
 
-    private function getMenu(Request $api_request, string $locale, string $type)
+    public function getMenu(Request $api_request, string $locale, string $type)
     {
         $client = new GuzzleClient();
 
