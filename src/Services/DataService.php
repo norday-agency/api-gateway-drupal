@@ -273,7 +273,7 @@ class DataService
             return $redirect;
         }
 
-        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
+        $cache_id = hash('sha256', implode('.', array_filter([config('app.url'), $locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
