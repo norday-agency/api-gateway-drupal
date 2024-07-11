@@ -11,7 +11,7 @@ use Http\Adapter\Guzzle7\Client as G7Client;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
-class DrupalController extends Controller
+class SitemapController extends Controller
 {
     /**
      * Load drupal complete sitemap
