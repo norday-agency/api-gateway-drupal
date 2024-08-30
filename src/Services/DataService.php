@@ -171,7 +171,7 @@ class DataService
         return new JsonResponse($data);
     }
 
-    private function getMenu(Request $api_request, string $locale, string $type)
+    public function getMenu(Request $api_request, string $locale, string $type)
     {
         $client = new GuzzleClient();
 
@@ -350,7 +350,7 @@ class DataService
             return $redirect;
         }
 
-        $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
+        $cache_id = hash('sha256', implode('.', array_filter([config('app.url'), $locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
@@ -377,11 +377,14 @@ class DataService
                 ],
             ];
 
+            if ($default_query = config('cms.default_query')) {
+                $query['filter'] = array_merge($query['filter'], $default_query['filter']);
+            }
+
             if ($slug) { // show content-type based on slug
                 $path = '/' . $slug;
 
-                // todo: make this dynamic through config
-                if (!in_array($type,  ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+                if (!in_array($type, ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
                     $path = '/' . trans("routes.{$type}") . $path;
                 }
 
