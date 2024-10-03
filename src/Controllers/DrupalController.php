@@ -47,19 +47,13 @@ class DrupalController extends Controller
     }
 
     /**
-     * Load drupal complete sitemap
+     * Load drupal complete sitemap based on .env vars
      */
-    public function getSitemap(Request $request)
+    public function getSitemap(Request $request, Sitemap $sitemap)
     {
-        $cacheKey = "items";
-        
-        Cache::remember($cacheKey, 3600, function() use (&$request){
-          return $this->fillMap($request);
-        });
-
-        return response()->view('api-gateway-drupal::sitemap', [
-            'posts' =>  Cache::get( $cacheKey)
-        ])->header('Content-Type', 'text/xml');
+        $sitemapUrl = 'https://' . config('filesystems.disks.s3.url') . '/xmlsitemap/' . config('cms.sitemap.folder') . '/1.xml';
+        $sitemapData = file_get_contents($sitemapUrl);
+        return response($sitemapData)->header('Content-Type', 'text/xml');
     }
 
     private function fetchPageForType(int $page = 1, Request $request, $locale, $type)
@@ -70,39 +64,5 @@ class DrupalController extends Controller
             return $data;
         } else {
             return NULL;
-        }
-    }  
-    
-    private function formatDate($carbonObject) {
-      if($carbonObject instanceof \Illuminate\Support\Carbon  or $carbonObject instanceof \Carbon\Carbon) {
-        return $carbonObject->tz('Europe/Berlin')->format('Y-m-d\Th:i:sP');
-      }
-    }
-
-    private function fillMap($request){
-      $items = [];
-      foreach (config('app.supported_locales') as $locale) {
-        foreach (array_keys(config('cms.types')) as $type) {
-          $page = 1;
-
-          while (1) {
-              if ($data = $this->fetchPageForType($page, $request, $locale, $type)) {
-                $data->each(function ($item) use ($locale, &$items) {
-                  $url = config('app.website_url') . (($locale === 'nl') ? $item->slug : '/' . $locale . $item->slug);
-                  if (Carbon::now()->timestamp >= strtotime($item->publish_date)) {
-                      $lastModified = $item->edit_date;
-
-                      $items[] = [$url, $this->formatDate($lastModified), 1.0, 'weekly'];
-                  }
-                });
-              } else {
-                  break;
-              }
-
-              $page++;
-          }   
-        }
-      }
-      return $items;
-    } 
+       
 }

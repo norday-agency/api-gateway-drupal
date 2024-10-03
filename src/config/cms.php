@@ -14,5 +14,8 @@ return [
         'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
         'apiScope' => env('DRUPAL_OAUTH_SCOPE')
     ],
-    'securedPaths' => explode(',', env('DRUPAL_SECURED_PATHS'))
+    'securedPaths' => explode(',', env('DRUPAL_SECURED_PATHS')),
+    'sitemap' => [
+        'folder' => env('SITEMAP_FOLDER'),
+    ],
 ];
