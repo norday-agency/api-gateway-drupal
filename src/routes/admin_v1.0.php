@@ -1,4 +1,6 @@
 <?php
+// Sitemap
+Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap');
 
 // Clear cache
 Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
