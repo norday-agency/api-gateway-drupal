@@ -3,9 +3,6 @@
 // Clear cache
 Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
 
-// Sitemap
-Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap')->name('api-gateway-drupal::sitemap');
-
 Route::group(
     [
         'prefix' => '{locale}',
