@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use IN10\ApiGatewayDrupal\Services\DataService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 class DrupalController extends Controller
 {
@@ -49,7 +47,7 @@ class DrupalController extends Controller
     /**
      * Load drupal complete sitemap based on .env vars
      */
-    public function getSitemap(Request $request, Sitemap $sitemap)
+    public function getSitemap()
     {
         $sitemapUrl = 'https://' . config('filesystems.disks.s3.url') . '/xmlsitemap/' . config('cms.sitemap.folder') . '/1.xml';
         $sitemapData = file_get_contents($sitemapUrl);
