@@ -147,6 +147,8 @@ class DataService
                 $link->relative = $link->description;
             }
 
+            unset($link->description);
+
             // $link is object > cast to array else error
             if (array_key_exists('below', (array) $link)) {
                 $link->below = $this->formatMenuLink($link->below);
