@@ -132,7 +132,7 @@ class DataService
 
     private function formatMenuLink(?array $items): Collection
     {
-        return collect($items)->map(function ($link) {
+        $menu = collect($items)->map(function ($link) {
             if (!empty($link->relative)){
                 $url = $link->relative;
                 // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
@@ -154,8 +154,15 @@ class DataService
                 $link->below = $this->formatMenuLink($link->below);
             }
 
+            // if the page is not translated, remove it from the menu
+            if (!empty($link->relative) && strpos($link->relative, 'node/') !== false) {
+                return false;
+            }
+
             return $link;
         });
+
+        return collect(array_filter($menu->toArray()));
     }
 
     /**
