@@ -133,12 +133,19 @@ class DataService
     private function formatMenuLink(?array $items): Collection
     {
         return collect($items)->map(function ($link) {
-            // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
-            $url = $link->relative;
-            if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
-                $url = str_replace('/' . config('app.base_locale', 'nl'), '', $url);
+            if (!empty($link->relative)){
+                $url = $link->relative;
+                // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
+                if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
+                    $url = str_replace('/' . config('app.base_locale', 'nl'), '', $url);
+                }
+                $link->relative = $url;
             }
-            $link->relative = $url;
+
+            // menu item description is used for relative url for other languages
+            if (!empty($link->description)) {
+                $link->relative = $link->description;
+            }
 
             // $link is object > cast to array else error
             if (array_key_exists('below', (array) $link)) {
