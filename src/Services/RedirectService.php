@@ -27,12 +27,12 @@ class RedirectService
             // maintenance mypass
             if ($globalSettings[0]->maintenance_mypass && in_array(
                     substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config('admin.maintenance_mypass.redirects')
+                    config('cms.maintenance_mypass.redirects')
                 )) {
                 $redirect = [
                     "language" => "nl",
                     "source" => $redirect_path,
-                    "url" => config("admin.maintenance_mypass.redirect_url"),
+                    "url" => config("cms.maintenance_mypass.redirect_url"),
                     "statusCode" => "307"
                 ];
                 return new JsonResponse($redirect, 307);
@@ -40,12 +40,12 @@ class RedirectService
             // maintenance shop
             if ($globalSettings[0]->maintenance_shop && in_array(
                     substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config('admin.maintenance_shop.redirects')
+                    config('cms.maintenance_shop.redirects')
                 )) {
                 $redirect = [
                     "language" => "nl",
                     "source" => $redirect_path,
-                    "url" => config("admin.maintenance_shop.redirect_url"),
+                    "url" => config("cms.maintenance_shop.redirect_url"),
                     "statusCode" => "307"
                 ];
                 return new JsonResponse($redirect, 307);
