@@ -17,7 +17,7 @@ Route::group(
 
         // Content type routes
         foreach (config('app.supported_locales') as $language) {
-            foreach (array_keys(config('admin.types')) as $type) {
+            foreach (array_keys(config('cms.types')) as $type) {
                 Route::prefix(trans("routes.{$type}", [], $language))->group(
                     function () use ($type) {
                         Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name($type)->where('slug', '.*');
