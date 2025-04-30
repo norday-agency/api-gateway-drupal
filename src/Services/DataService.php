@@ -133,7 +133,7 @@ class DataService
     private function formatMenuLink(?array $items): Collection
     {
         $menu = collect($items)->map(function ($link) {
-            if (!empty($link->relative)){
+            if (!empty($link->relative)) {
                 $url = $link->relative;
                 // Todo: get default locale from env for removing default locale in urls or use same functionality as in Link resource
                 if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
@@ -384,14 +384,7 @@ class DataService
                 $hydrator = new ClassDocumentHydrator();
                 $hydratedData = $hydrator->hydrate($response->document());
 
-                if (empty($hydratedData)) {
-                    $data['statusCode'] = 404;
-                    $data['statusText'] = 'Page not found';
-
-                    return $data;
-                }
-
-                if ($slug) {
+                if (!empty($hydratedData) && $slug) {
                     // Set content-type detail based on type and slug
                     $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                 } else {
