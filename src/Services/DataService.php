@@ -162,7 +162,7 @@ class DataService
             return $link;
         });
 
-        return collect(array_filter($menu->toArray()));
+        return collect(array_values(array_filter($menu->toArray())));
     }
 
     /**
