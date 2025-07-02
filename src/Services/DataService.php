@@ -387,6 +387,11 @@ class DataService
                 if (!empty($hydratedData) && $slug) {
                     // Set content-type detail based on type and slug
                     $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
+                } else if (empty($hydratedData) && $slug) {
+                    $data['statusCode'] = 404;
+                    $data['statusText'] = 'Page not found';
+
+                    return $data;
                 } else {
                     // Set content-type collection
                     $data['data'] = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
