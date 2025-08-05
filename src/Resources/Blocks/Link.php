@@ -15,7 +15,13 @@ class Link extends JsonResource
      */
     public function toArray($request)
     {
-        $url = $this->link['options']['url'];
+        if (isset($this->link['options']['url'])) {
+            $url = $this->link['options']['url'];
+        } elseif (isset($this->link['url'])) {
+            $url = $this->link['url'];
+        } else {
+            $url = $this->link['uri'];
+        }
         if (substr($url, 0, 3) === '/' . config('app.base_locale', 'nl')) {
             $url = str_replace('/' . config('app.base_locale', 'nl'), '', $url);
         }
