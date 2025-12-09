@@ -284,6 +284,12 @@ class DataService
      */
     public static function getContentTypeJson(Request $api_request, string $locale, string $type, ?string $slug = null): JsonResponse
     {
+
+        $path = explode('/', $api_request->path());
+        if (!empty($slug) && in_array($path[4], trans("routes", [], $locale))) {
+            $slug = $path[3] . '/' . $path[4] . '/' . $slug;
+        }
+        
         // Check for redirect in Drupal
         if ($slug && $redirect = RedirectService::check($locale, $type, $slug)) {
             return $redirect;
