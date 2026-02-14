@@ -3,7 +3,6 @@
 namespace IN10\ApiGatewayDrupal\Services;
 
 use Carbon\Carbon;
-use Drupal\media\OEmbed\Resource;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
