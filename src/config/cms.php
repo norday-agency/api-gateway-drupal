@@ -20,6 +20,7 @@ return [
     'pagination' => [
         'limit' => env('CMS_PAGINATION_LIMIT', 12),
     ],
+    'fallback-on-pages' => [], // Add types that should fallback on pages
     // 'oauth' => [
     //     'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
     //     'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
