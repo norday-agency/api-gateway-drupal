@@ -396,6 +396,13 @@ class DataService
                     $data['statusCode'] = 404;
                     $data['statusText'] = 'Page not found';
 
+                    // Fallback to pages content-type,
+                    // when configured it check if the slug exists as page.
+                    if (self::shouldFallbackOnPages($type)) {
+                        $translatedRoute = trans("routes.{$type}");
+                        return self::getContentTypeJson($api_request, $locale, 'pages', $translatedRoute . '/'. $slug );
+                    }
+
                     return $data;
                 } else {
                     // Set content-type collection
@@ -423,6 +430,10 @@ class DataService
             return $data;
         }, [$type]);
 
+        // When using the fallback on pages feature, this fuction is called recursively and data can already be a JsonResponse
+        if ($data instanceof JsonResponse) {
+            return $data;
+        }
         return new JsonResponse($data, $data['statusCode']);
     }
 
@@ -659,5 +670,10 @@ class DataService
         }
 
         return null;
+    }
+
+    protected static function shouldFallbackOnPages(string $type): bool
+    {
+        return in_array($type, config('cms.fallback-on-pages'));
     }
 }
