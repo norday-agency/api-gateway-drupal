@@ -56,6 +56,11 @@ class DataService
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
 
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
+
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);
         $response->getReasonPhrase();
@@ -247,6 +252,11 @@ class DataService
                 // Instantiate the synchronous JSON:API Client
                 $client = new JsonApiClient($guzzleClient);
 
+                // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+                if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+                    $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+                }
+
                 // Send the request synchronously to retrieve the response
                 $response = $client->sendRequest($request);
                 $response->getReasonPhrase();
@@ -397,6 +407,11 @@ class DataService
                 // Instantiate the synchronous JSON:API Client
                 $client = new JsonApiClient($guzzleClient);
 
+                // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+                if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+                    $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+                }
+
                 // Send the request synchronously to retrieve the response
                 $response = $client->sendRequest($request);
                 $response->getReasonPhrase();
@@ -481,6 +496,11 @@ class DataService
 
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
+
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
 
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);

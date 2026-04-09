@@ -71,8 +71,14 @@ class RedirectService
             $guzzleClient = g7Client::createWithConfig([]);
         }
 
+        
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
+        
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $redirectRequest = $redirectRequest->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
         $redirectResponse = $client->sendRequest($redirectRequest);
 
         if ($redirectResponse->getStatusCode() < 300) {
