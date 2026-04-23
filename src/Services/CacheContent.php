@@ -7,12 +7,12 @@ use Closure;
 
 class CacheContent
 {
-    /**
-     * Default minutes for caching
+     /**
+     * Default seconds for caching
      *
      * @var integer
      */
-    protected $limit = 1440;
+    protected $limit = 86400; // 24 hours in seconds
 
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
