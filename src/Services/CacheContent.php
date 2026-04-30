@@ -17,6 +17,9 @@ class CacheContent
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
      *
+     * Only persists values whose HTTP status is below 400 when a status can be resolved
+     * (array key statusCode, or object with getStatusCode()). Unsolvable response codes are not cached.
+     *
      * @param string $name
      * @param Closure $callback
      * @param array $tags
@@ -25,12 +28,24 @@ class CacheContent
     public static function remember(string $name, Closure $callback, array $tags = null)
     {
         $self = new static();
+        $useTags = $self->supportTags() && !is_null($tags);
 
-        if ($self->supportTags() && !is_null($tags)) {
-            return Cache::tags($tags)->remember($name, $self->limit, $callback);
+        $cached = $useTags ? Cache::tags($tags)->get($name) : Cache::get($name);
+        if (!is_null($cached)) {
+            return $cached;
         }
 
-        return Cache::remember($name, $self->limit, $callback);
+        $value = $callback();
+
+        if ($self->shouldCache($value)) {
+            if ($useTags) {
+                Cache::tags($tags)->put($name, $value, $self->limit);
+            } else {
+                Cache::put($name, $value, $self->limit);
+            }
+        }
+
+        return $value;
     }
 
     public static function flush(array $tags = null)
@@ -42,6 +57,36 @@ class CacheContent
         }
 
         return Cache::flush();
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function shouldCache($value)
+    {
+        $code = $this->resolveResponseStatusCode($value);
+        if ($code === null || $code >= 400) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param mixed $value
+     * @return int|null
+     */
+    protected function resolveResponseStatusCode($value)
+    {
+        if (is_array($value) && array_key_exists('statusCode', $value)) {
+            return (int) $value['statusCode'];
+        }
+        if (is_object($value) && method_exists($value, 'getStatusCode')) {
+            return (int) $value->getStatusCode();
+        }
+
+        return null;
     }
 
     /**
