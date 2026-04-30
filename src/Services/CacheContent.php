@@ -98,4 +98,13 @@ class CacheContent
     {
         return Cache::getStore() instanceof \Illuminate\Cache\TaggableStore;
     }
+
+     public static function forget(array $keys)
+    {
+        foreach ($keys as $key) {
+            if (Cache::has($key)) {
+                Cache::forget($key);
+            }
+        }
+    }
 }
