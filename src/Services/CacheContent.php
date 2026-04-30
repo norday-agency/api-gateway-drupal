@@ -56,6 +56,7 @@ class CacheContent
             return Cache::tags($tags)->flush();
         }
 
+        Artisan::call('cache:clear'); // clear all cache
         return Cache::flush();
     }
 
