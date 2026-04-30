@@ -18,7 +18,7 @@ class CacheContent
      * Get an item from the cache, or execute the given Closure and store the result.
      *
      * Only persists values whose HTTP status is below 400 when a status can be resolved
-     * (array key statusCode, or object with getStatusCode()). Unsolvable response codes are not cached.
+     * (array key statusCode, or object with getStatusCode()). Unsolvable response codes are also cached.
      *
      * @param string $name
      * @param Closure $callback
@@ -67,11 +67,11 @@ class CacheContent
     protected function shouldCache($value)
     {
         $code = $this->resolveResponseStatusCode($value);
-        if ($code === null || $code >= 400) {
-            return false;
+        if ($code === null || $code < 400) {
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
