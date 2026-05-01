@@ -4,6 +4,7 @@ namespace IN10\ApiGatewayDrupal\Services;
 
 use Cache;
 use Closure;
+use Illuminate\Support\Facades\Artisan;
 
 class CacheContent
 {
