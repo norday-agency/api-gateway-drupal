@@ -9,6 +9,9 @@ return [
     'pagination' => [
         'limit' => env('DRUPAL_PAGINATION_LIMIT', 9),
     ],
+    'cache' => [
+        'ttl' => (int) env('DRUPAL_CACHE_TTL', 86400),
+    ],
     'oauth' => [
         'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
         'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),

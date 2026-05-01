@@ -17,6 +17,11 @@ class CacheController extends Controller
     public function invalidate(Request $request)
     {
         $tag = $request->input('tag');
+
+        if (is_null($tag) || $tag === '' || $tag === []) {
+            return new JsonResponse(false, 400);
+        }
+
         $result = CacheContent::flush($tag);
 
         return new JsonResponse($result);
