@@ -318,14 +318,17 @@ class DataService
                 'langcode' => [
                     'value' => $locale,
                 ],
-                'datefilter' => [
+            ];
+
+            if (!in_array($type, ['homepage'])) {
+                $query['filter']['datefilter'] = [
                     'condition' => [
                         'path' => 'publish_date',
                         'operator' => '<=',
                         'value' => Carbon::now()->toISOString(),
                     ],
-                ],
-            ];
+                ];
+            }
 
             if ($default_query = config('cms.default_query')) {
                 $query['filter'] = array_merge($query['filter'], $default_query['filter']);
