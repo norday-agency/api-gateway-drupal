@@ -16,6 +16,37 @@ class RedirectService
      */
     public static function check(string $locale, string $type, string $slug): ?JsonResponse
     {
+        $cacheId = hash('sha256', implode('.', ['redirect', $locale, $type, $slug]));
+
+        $cached = CacheContent::remember(
+            $cacheId,
+            function () use ($locale, $type, $slug) {
+                $redirect = self::resolve($locale, $type, $slug);
+
+                if (is_null($redirect)) {
+                    return ['response' => null];
+                }
+
+                return [
+                    'response' => [
+                        'data' => $redirect->getData(true),
+                        'statusCode' => $redirect->getStatusCode(),
+                    ],
+                ];
+            },
+            ['redirects'],
+            3600
+        );
+
+        if (!is_array($cached) || !array_key_exists('response', $cached) || is_null($cached['response'])) {
+            return null;
+        }
+
+        return new JsonResponse($cached['response']['data'], (int) $cached['response']['statusCode']);
+    }
+
+    protected static function resolve(string $locale, string $type, string $slug): ?JsonResponse
+    {
         $redirect_path = $slug;
 
         if ($type !== 'pages') {

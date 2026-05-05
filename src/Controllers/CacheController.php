@@ -22,6 +22,10 @@ class CacheController extends Controller
             $tag = [$tag];
         }
 
+        if (empty(array_filter($tag))) {
+            return new JsonResponse(false, 400);
+        }
+
         $result = CacheContent::flush($tag);
 
         return new JsonResponse($result);

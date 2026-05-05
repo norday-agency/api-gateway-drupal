@@ -17,11 +17,24 @@ class TranslationService
      */
     public static function get(string $locale, string $type, string $slug)
     {
-
         if ($type === 'page') {
             $type = 'pages';
         }
 
+        $cacheId = hash('sha256', implode('.', ['translations', $locale, $type, $slug]));
+
+        return CacheContent::remember(
+            $cacheId,
+            function () use ($locale, $type, $slug) {
+                return self::resolve($locale, $type, $slug);
+            },
+            ['translations'],
+            3600
+        );
+    }
+
+    protected static function resolve(string $locale, string $type, string $slug): array
+    {
         $supportedLocales = array_diff(config('app.supported_locales'), [$locale]);
 
         $translations = [

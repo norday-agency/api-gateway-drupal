@@ -62,10 +62,21 @@ class DrupalController extends Controller
     }
 
     /**
-     * Load drupal complete sitemap
+     * Load drupal complete sitemap based on .env vars
      */
     public function getSitemap(Request $request)
     {
+        // Try to get sitemap from S3 bucket first
+        if (config('cms.sitemap.folder')) {
+            $sitemapUrl = 'https://' . config('filesystems.disks.s3.url') . '/xmlsitemap/' . config('cms.sitemap.folder') . '/1.xml';
+            $sitemapData = @file_get_contents($sitemapUrl);
+
+            if ($sitemapData !== false) {
+                return response($sitemapData)->header('Content-Type', 'text/xml');
+            }
+        }
+
+        // Fallback: build sitemap from Drupal content
         $cacheKey = 'items';
 
         Cache::remember($cacheKey, 3600, function () use (&$request) {
