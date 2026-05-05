@@ -26,6 +26,9 @@ class CacheContent
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
      *
+     * Only persists values whose HTTP status is below 400 when a status can be resolved
+     * (array key statusCode, or object with getStatusCode()). Unsolvable response codes are also cached.
+     *
      * @param string       $name     Cache key for the value itself.
      * @param Closure      $callback Produces the value on a cache miss.
      * @param array|null   $tags     Optional tags this entry belongs to.
@@ -42,20 +45,33 @@ class CacheContent
         // Clean up tags: drop nulls/empties/duplicates, coerce strings.
         $tags = $self->normalizeTags($tags);
 
-        // Happy path: the cache store supports tags natively (Redis/Memcached).
-        // Let Laravel handle association + invalidation.
-        if ($self->supportTags() && $tags) {
-            return Cache::tags($tags)->remember($name, $ttl, $callback);
+        $useTags = $self->supportTags() && !empty($tags);
+
+        // Check if we already have a cached value.
+        $cached = $useTags ? Cache::tags($tags)->get($name) : Cache::get($name);
+        if (!is_null($cached)) {
+            return $cached;
         }
 
-        // Fallback path: no native tag support (e.g. file driver).
-        // Cache the value normally...
-        $value = Cache::remember($name, $ttl, $callback);
+        // Execute the callback to get the value.
+        $value = $callback();
 
-        // ...then record this key in each tag's index so we can find it
-        // again when someone calls flush($tag).
-        if ($tags) {
-            $self->trackTags($tags, $name);
+        // Only cache if the response status is below 400.
+        if (!$self->shouldCache($value)) {
+            return $value;
+        }
+
+        // Happy path: the cache store supports tags natively (Redis/Memcached).
+        if ($useTags) {
+            Cache::tags($tags)->put($name, $value, $ttl);
+        } else {
+            Cache::put($name, $value, $ttl);
+
+            // Record this key in each tag's index so we can find it
+            // again when someone calls flush($tag).
+            if ($tags) {
+                $self->trackTags($tags, $name);
+            }
         }
 
         return $value;
@@ -96,6 +112,50 @@ class CacheContent
         // Only an explicit flush() with no arguments wipes everything.
         // An empty/invalid tag input returns false instead of nuking the cache.
         return $flushAll ? Cache::flush() : false;
+    }
+
+    /**
+     * Forget specific cache keys.
+     *
+     * @param array $keys
+     */
+    public static function forget(array $keys)
+    {
+        foreach ($keys as $key) {
+            if (Cache::has($key)) {
+                Cache::forget($key);
+            }
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function shouldCache($value)
+    {
+        $code = $this->resolveResponseStatusCode($value);
+        if ($code === null || $code < 400) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param mixed $value
+     * @return int|null
+     */
+    protected function resolveResponseStatusCode($value)
+    {
+        if (is_array($value) && array_key_exists('statusCode', $value)) {
+            return (int) $value['statusCode'];
+        }
+        if (is_object($value) && method_exists($value, 'getStatusCode')) {
+            return (int) $value->getStatusCode();
+        }
+
+        return null;
     }
 
     /**

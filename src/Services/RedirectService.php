@@ -59,12 +59,12 @@ class RedirectService
             // maintenance mypass
             if ($globalSettings[0]->maintenance_mypass && in_array(
                     substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config('admin.maintenance_mypass.redirects')
+                    config('cms.maintenance_mypass.redirects')
                 )) {
                 $redirect = [
                     "language" => "nl",
                     "source" => $redirect_path,
-                    "url" => config("admin.maintenance_mypass.redirect_url"),
+                    "url" => config("cms.maintenance_mypass.redirect_url"),
                     "statusCode" => "307"
                 ];
                 return new JsonResponse($redirect, 307);
@@ -72,27 +72,12 @@ class RedirectService
             // maintenance shop
             if ($globalSettings[0]->maintenance_shop && in_array(
                     substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config('admin.maintenance_shop.redirects')
+                    config('cms.maintenance_shop.redirects')
                 )) {
                 $redirect = [
                     "language" => "nl",
                     "source" => $redirect_path,
-                    "url" => config("admin.maintenance_shop.redirect_url"),
-                    "statusCode" => "307"
-                ];
-                return new JsonResponse($redirect, 307);
-            }
-            // maintenance partners
-            if ($globalSettings[0]->maintenance_partners && in_array(
-                    substr($redirect_path,strpos($redirect_path, '/') + 1),
-                    config(
-                        'admin.maintenance_partners.redirects'
-                    )
-                )) {
-                $redirect = [
-                    "language" => "nl",
-                    "source" => $redirect_path,
-                    "url" => config("admin.maintenance_partners.redirect_url"),
+                    "url" => config("cms.maintenance_shop.redirect_url"),
                     "statusCode" => "307"
                 ];
                 return new JsonResponse($redirect, 307);
@@ -118,8 +103,14 @@ class RedirectService
             $guzzleClient = g7Client::createWithConfig([]);
         }
 
+        
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
+        
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $redirectRequest = $redirectRequest->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
         $redirectResponse = $client->sendRequest($redirectRequest);
 
         if ($redirectResponse->getStatusCode() < 300) {

@@ -251,6 +251,11 @@ class DataService
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
 
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
+
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);
 
@@ -380,6 +385,11 @@ class DataService
             // Instantiate the synchronous JSON:API Client
             $client = new JsonApiClient($guzzleClient);
 
+            // use basic authentication if a config flag is set
+            if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+                $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+            }
+
             // Send the request synchronously to retrieve the response
             $response = $client->sendRequest($request);
 
@@ -390,14 +400,16 @@ class DataService
                 $hydrator = new ClassDocumentHydrator();
                 $hydratedData = $hydrator->hydrate($response->document());
 
-                if (!empty($hydratedData) && $slug) {
-                    // Set content-type detail based on type and slug
-                    $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
-                } else if (empty($hydratedData) && $slug) {
+                if (empty($hydratedData)) {
                     $data['statusCode'] = 404;
                     $data['statusText'] = 'Page not found';
 
                     return $data;
+                }
+
+                if ($slug || in_array($type, config('cms.noPagination', []))) {
+                    // Set content-type detail based on type and slug
+                    $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                 } else {
                     // Set content-type collection
                     $data['data'] = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
@@ -423,6 +435,19 @@ class DataService
 
             return $data;
         }, [$type]);
+
+        if (config('website.account') === 'rotterdampas' && $data['statusCode'] === 404 && strpos(
+                $slug,
+                'blog/'
+            ) !== false) {
+            $contents = [
+                "language" => "nl",
+                "source" => $slug,
+                "url" => "/nl/inspiratie",
+                "statusCode" => "301"
+            ];
+            return new JsonResponse($contents, $contents['statusCode']);
+        }
 
         return new JsonResponse($data, $data['statusCode']);
     }
@@ -491,6 +516,11 @@ class DataService
 
             // Instantiate the synchronous JSON:API Client
             $client = new JsonApiClient($guzzleClient);
+
+            // use basic authentication if a config flag is set
+            if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+                $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+            }
 
             // Send the request synchronously to retrieve the response
             $response = $client->sendRequest($request);
@@ -636,6 +666,11 @@ class DataService
 
         // Instantiate the synchronous JSON:API Client
         $client = new JsonApiClient($guzzleClient);
+
+        // use basic authentication if a config flag is set && get base64 encoded username and password string from the config
+        if (config('cms.useBasicAuthentication') && config('cms.BasicAuthBase64String')) {
+            $request = $request->withHeader('Authorization', 'Basic ' . config('cms.BasicAuthBase64String'));
+        }
 
         // Send the request synchronously to retrieve the response
         $response = $client->sendRequest($request);
