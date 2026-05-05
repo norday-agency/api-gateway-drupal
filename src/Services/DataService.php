@@ -82,7 +82,7 @@ class DataService
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale) {
             $settings = [];
 
-            foreach (config('cms.navigation') as $container => $menus) {
+            foreach (config('cms.navigation', []) as $container => $menus) {
                 foreach ($menus as $menu) {
                     $settings['navigation'][$container][$menu] = $this->getMenu($api_request, $locale, "{$container}-{$menu}");
                 }
