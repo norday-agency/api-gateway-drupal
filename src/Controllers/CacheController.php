@@ -19,7 +19,9 @@ class CacheController extends Controller
         $tag = $request->input('tag');
 
         if (is_null($tag) || $tag === '' || $tag === []) {
-            return new JsonResponse(false, 400);
+            //clear all cache
+            CacheContent::flush();
+            return new JsonResponse(true);
         }
 
         $result = CacheContent::flush($tag);
