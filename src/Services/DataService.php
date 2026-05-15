@@ -3,7 +3,6 @@
 namespace IN10\ApiGatewayDrupal\Services;
 
 use Carbon\Carbon;
-use Drupal\media\OEmbed\Resource;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request as OutgoingRequest;
 use GuzzleHttp\Psr7\Uri;
@@ -291,7 +290,7 @@ class DataService
     {
 
         $path = explode('/', $api_request->path());
-        if (!empty($slug) && in_array($path[4], trans("routes", [], $locale))) {
+        if (!empty($slug) && isset($path[4]) && in_array($path[4], trans("routes", [], $locale))) {
             $slug = $path[3] . '/' . $path[4] . '/' . $slug;
         }
         
