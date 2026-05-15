@@ -40,4 +40,8 @@ return [
     'sort' => [
         'default' => 'title',
     ],
+    'langcode_filter' => [
+        'enabled' => filter_var(env('CMS_LANGCODE_FILTER_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'except_types' => [],
+    ],
 ];

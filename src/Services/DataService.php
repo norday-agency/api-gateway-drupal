@@ -313,11 +313,16 @@ class DataService
                 ],
             ];
 
-            $query['filter'] = [
-                'langcode' => [
+            $query['filter'] = [];
+
+            if (
+                config('cms.langcode_filter.enabled', true)
+                && !in_array($type, config('cms.langcode_filter.except_types', []), true)
+            ) {
+                $query['filter']['langcode'] = [
                     'value' => $locale,
-                ],
-            ];
+                ];
+            }
 
             if (
                 config('cms.publish_date_filter.enabled', true)
