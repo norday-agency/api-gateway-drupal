@@ -317,14 +317,20 @@ class DataService
                 'langcode' => [
                     'value' => $locale,
                 ],
-                'datefilter' => [
+            ];
+
+            if (
+                config('cms.publish_date_filter.enabled', true)
+                && !in_array($type, config('cms.publish_date_filter.except_types', []), true)
+            ) {
+                $query['filter']['datefilter'] = [
                     'condition' => [
-                        'path' => 'publish_date',
+                        'path' => config('cms.publish_date_filter.field', 'publish_date'),
                         'operator' => '<=',
                         'value' => Carbon::now()->toISOString(),
                     ],
-                ],
-            ];
+                ];
+            }
 
             if ($default_query = config('cms.default_query')) {
                 $query['filter'] = array_merge($query['filter'], $default_query['filter']);
@@ -473,6 +479,12 @@ class DataService
                     'value' => $path,
                 ];
             } else { // show content-type index
+                if ($api_request->has('contributor') && is_numeric($api_request->get('contributor'))) {
+                    $query['filter']['contributor.drupal_internal__nid'] = [
+                        'value' => $api_request->get('contributor'),
+                    ];
+                }
+
                 if ($api_request->has('promote') && in_array($api_request->get('promote'), ['true', 'false'], true)) {
                     $query['filter']['promote'] = [
                         'value' => ($api_request->get('promote') === 'true'),
@@ -491,7 +503,7 @@ class DataService
                     ];
                 }
 
-                $query['sort'] = '-sticky,-publish_date,title';
+                $query['sort'] = config("cms.sort.{$type}", config('cms.sort.default', 'title'));
             }
 
             $query = http_build_query($query);
