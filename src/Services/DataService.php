@@ -119,9 +119,9 @@ class DataService
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale) {
             $settings = [];
 
-            foreach (config('cms.navigation') as $container => $menus) {
+            foreach (config('cms.navigation', []) as $container => $menus) {
                 foreach ($menus as $menu) {
-                    $settings['navigation'][$container][$menu] = $this->getMenu($api_request, $locale, "{$container}-{$menu}");
+                    $settings['navigation'][$container][$menu] = self::getMenu($api_request, $locale, "{$container}-{$menu}");
                 }
             }
 
@@ -131,7 +131,7 @@ class DataService
         return new JsonResponse($data);
     }
 
-    public function getMenu(Request $api_request, string $locale, string $type)
+    public static function getMenu(Request $api_request, string $locale, string $type)
     {
         $client = new GuzzleClient();
 
@@ -161,13 +161,13 @@ class DataService
                 return null;
             }
 
-            return $this->formatMenuLink($result);
+            return self::formatMenuLink($result);
         }
 
         return null;
     }
 
-    private function formatMenuLink(?array $items): Collection
+    private static function formatMenuLink(?array $items): Collection
     {
         $menu = collect($items)->map(function ($link) {
             if (!empty($link->relative)) {
@@ -188,7 +188,7 @@ class DataService
 
             // $link is object > cast to array else error
             if (array_key_exists('below', (array) $link)) {
-                $link->below = $this->formatMenuLink($link->below);
+                $link->below = self::formatMenuLink($link->below);
             }
 
             // if the page is not translated, remove it from the menu

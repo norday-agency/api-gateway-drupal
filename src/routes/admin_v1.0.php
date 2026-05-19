@@ -19,8 +19,8 @@ Route::group(
         Route::get('menu/{type}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getMenu')->where('type', '.*')->name('menu');
 
         // Content type routes
-        foreach (config('app.supported_locales') as $language) {
-            foreach (array_keys(config('cms.types')) as $type) {
+        foreach (config('app.supported_locales', []) as $language) {
+            foreach (array_keys(config('cms.types', [])) as $type) {
                 Route::prefix(trans("routes.{$type}", [], $language))->group(
                     function () use ($type) {
                         Route::get('{slug?}', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getContentType')->name($type)->where('slug', '.*');
