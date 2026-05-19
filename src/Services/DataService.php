@@ -16,6 +16,44 @@ use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
 class DataService
 {
+    /**
+     * Build the canonical content path that mirrors the Drupal field_path filter.
+     * Returns null for index/list requests (no slug).
+     *
+     * Pages/site_pages/homepage have no route prefix; everything else gets the
+     * locale-translated route prefix prepended (e.g. events → "agenda" in nl).
+     */
+    protected static function buildContentPath(string $type, ?string $slug): ?string
+    {
+        if (!$slug) {
+            return null;
+        }
+
+        $path = '/' . $slug;
+        if (!in_array($type, ['pages', 'site_pages', 'homepage']) && strpos(trans("routes.{$type}"), 'routes.') === false) {
+            $path = '/' . trans("routes.{$type}") . $path;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Tag set for a cached content-type response.
+     *
+     * - Single record: [$type, "$type:path:$contentPath"] — flushable individually,
+     *   still matches a nuclear flush of $type.
+     * - Index/list:    [$type, "$type:index"] — flushable as a group when any
+     *   record of $type changes, still matches a nuclear flush of $type.
+     */
+    protected static function tagsForContentType(string $type, ?string $contentPath): array
+    {
+        if ($contentPath === null) {
+            return [$type, "{$type}:index"];
+        }
+
+        return [$type, "{$type}:path:{$contentPath}"];
+    }
+
     public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
@@ -299,6 +337,9 @@ class DataService
             return $redirect;
         }
 
+        $contentPath = self::buildContentPath($type, $slug);
+        $tags = self::tagsForContentType($type, $contentPath);
+
         $cache_id = hash('sha256', implode('.', array_filter([config('app.url'), $locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
@@ -444,7 +485,7 @@ class DataService
             }
 
             return $data;
-        }, [$type]);
+        }, $tags);
 
         if (config('website.account') === 'rotterdampas' && $data['statusCode'] === 404 && strpos(
                 $slug,
@@ -467,6 +508,9 @@ class DataService
      */
     public static function getContentType(Request $api_request, string $locale, string $type, ?string $slug = null)
     {
+        $contentPath = self::buildContentPath($type, $slug);
+        $tags = self::tagsForContentType($type, $contentPath);
+
         $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
         $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
@@ -568,7 +612,7 @@ class DataService
             }
 
             return null;
-        }, [$type]);
+        }, $tags);
 
         return $data;
     }
@@ -628,7 +672,7 @@ class DataService
             }
 
             return null;
-        }, [$type]);
+        }, [$type, "{$type}:index"]);
 
         return $data;
     }
