@@ -98,9 +98,9 @@ class RedirectService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = g7Client::createWithConfig(['verify' => false]);
+            $guzzleClient = g7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
         } else {
-            $guzzleClient = g7Client::createWithConfig([]);
+            $guzzleClient = g7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
         }
 
         

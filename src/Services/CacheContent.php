@@ -26,8 +26,12 @@ class CacheContent
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
      *
-     * Only persists values whose HTTP status is below 400 when a status can be resolved
-     * (array key statusCode, or object with getStatusCode()). Unsolvable response codes are also cached.
+     * Caching is tiered by HTTP status (resolved from an array 'statusCode' key
+     * or an object's getStatusCode()):
+     *   - < 400 or no resolvable status → cached with the normal (long) TTL, tagged.
+     *   - 404 / 410 "not found"         → cached briefly via config('cms.cache.negative_ttl'),
+     *                                      untracked (negative caching against scans).
+     *   - any other error (5xx, …)      → not cached (transient).
      *
      * @param string       $name     Cache key for the value itself.
      * @param Closure      $callback Produces the value on a cache miss.
@@ -56,24 +60,50 @@ class CacheContent
         // Execute the callback to get the value.
         $value = $callback();
 
-        // Only cache if the response status is below 400.
-        if (!$self->shouldCache($value)) {
+        $code = $self->resolveResponseStatusCode($value);
+
+        // Successful (or status-less) responses: cache normally — the long TTL,
+        // and tagged so content invalidation from Drupal can clear them.
+        if ($code === null || $code < 400) {
+            // Happy path: the cache store supports tags natively (Redis/Memcached).
+            if ($useTags) {
+                Cache::tags($tags)->put($name, $value, $ttl);
+            } else {
+                Cache::put($name, $value, $ttl);
+
+                // Record this key in each tag's index so we can find it
+                // again when someone calls flush($tag).
+                if ($tags) {
+                    $self->trackTags($tags, $name);
+                }
+            }
+
             return $value;
         }
 
-        // Happy path: the cache store supports tags natively (Redis/Memcached).
-        if ($useTags) {
-            Cache::tags($tags)->put($name, $value, $ttl);
-        } else {
-            Cache::put($name, $value, $ttl);
+        // Negative caching: a 404/410 "not found" is a definitive, cacheable
+        // answer. Cache it only BRIEFLY (a page may be published moments later)
+        // and WITHOUT tag-index tracking — a scan hits thousands of unique junk
+        // paths, and recording each in the manual file-store index would balloon
+        // it. The short TTL is what bounds the entry; no invalidation is needed.
+        // We still mirror the read path's keyspace (tagged on Redis/Memcached,
+        // plain on file) so the entry is actually found on the next request.
+        if (in_array($code, [404, 410], true)) {
+            $negativeTtl = (int) config('cms.cache.negative_ttl', 60);
 
-            // Record this key in each tag's index so we can find it
-            // again when someone calls flush($tag).
-            if ($tags) {
-                $self->trackTags($tags, $name);
+            if ($negativeTtl > 0) {
+                if ($useTags) {
+                    Cache::tags($tags)->put($name, $value, $negativeTtl);
+                } else {
+                    Cache::put($name, $value, $negativeTtl);
+                }
             }
+
+            return $value;
         }
 
+        // Any other error (5xx, 403, 429, …) is transient — never cache it, or
+        // we'd keep serving a stale error after the upstream recovers.
         return $value;
     }
 
@@ -126,20 +156,6 @@ class CacheContent
                 Cache::forget($key);
             }
         }
-    }
-
-    /**
-     * @param mixed $value
-     * @return bool
-     */
-    protected function shouldCache($value)
-    {
-        $code = $this->resolveResponseStatusCode($value);
-        if ($code === null || $code < 400) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
