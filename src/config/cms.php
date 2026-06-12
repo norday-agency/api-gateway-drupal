@@ -22,7 +22,24 @@ return [
     ],
     'cache' => [
         'ttl' => (int) env('DRUPAL_CACHE_TTL', 86400),
+        // How long a 404/410 "not found" is cached (negative caching).
+        'negative_ttl' => (int) env('DRUPAL_CACHE_NEGATIVE_TTL', 60),
     ],
+    // Timeouts (seconds) for outgoing Drupal HTTP calls, so a slow upstream can't
+    // pin a PHP-FPM worker indefinitely. rebuild_timeout is the batch index build.
+    'http' => [
+        'connect_timeout' => (int) env('CMS_HTTP_CONNECT_TIMEOUT', 2),
+        'timeout' => (int) env('CMS_HTTP_TIMEOUT', 5),
+        'rebuild_timeout' => (int) env('CMS_HTTP_REBUILD_TIMEOUT', 30),
+    ],
+    // Authoritative index of valid paths: when built, unknown detail paths get an
+    // instant 404 without hitting Drupal. Disable to fall back to Drupal lookups.
+    'route_index' => [
+        'enabled' => filter_var(env('ROUTE_INDEX_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+    // Shared secret for the Drupal -> gateway webhooks (cache/invalidate +
+    // route-index). When null the webhook auth middleware is a no-op.
+    'webhook_secret' => env('GATEWAY_WEBHOOK_SECRET'),
     'oauth' => [
         'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
         'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
