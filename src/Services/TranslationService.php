@@ -65,9 +65,9 @@ class TranslationService
 
             // Instantiate the Guzzle HTTP Client
             if (in_array(config('app.env'), ['local', 'test'])) {
-                $guzzleClient = G7Client::createWithConfig(['verify' => false]);
+                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
             } else {
-                $guzzleClient = G7Client::createWithConfig([]);
+                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
             }
 
             // Instantiate the synchronous JSON:API Client
