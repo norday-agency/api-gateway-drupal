@@ -91,7 +91,7 @@ class RebuildRouteIndex extends Command
 
         $paths = [];
         $offset = 0;
-        $limit = 50;
+        $limit = (int) config('cms.route_index.page_limit', 50);
 
         do {
             $url = (string) new Uri(

@@ -36,6 +36,9 @@ return [
     // instant 404 without hitting Drupal. Disable to fall back to Drupal lookups.
     'route_index' => [
         'enabled' => filter_var(env('ROUTE_INDEX_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        // How many records the rebuild fetches per request. Lower it if a heavy
+        // content type times out / 504s while rebuilding on a slow backend.
+        'page_limit' => (int) env('ROUTE_INDEX_PAGE_LIMIT', 50),
     ],
     // Shared secret for the Drupal -> gateway webhooks (cache/invalidate +
     // route-index). When null the webhook auth middleware is a no-op.
