@@ -1,7 +1,8 @@
 <?php
 
-// Clear cache
-Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate');
+// Clear cache — guarded by the shared webhook secret (no-op when unset).
+Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheController@invalidate')
+    ->middleware(\IN10\ApiGatewayDrupal\Middleware\VerifyWebhookSecret::class);
 
 // Sitemap
 Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap')->name('api-gateway-drupal::sitemap');

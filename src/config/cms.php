@@ -23,6 +23,9 @@ return [
     'cache' => [
         'ttl' => (int) env('DRUPAL_CACHE_TTL', 86400),
     ],
+    // Shared secret for the Drupal -> gateway cache-invalidate webhook.
+    // When null the guard middleware is a no-op (backwards compatible).
+    'webhook_secret' => env('GATEWAY_WEBHOOK_SECRET'),
     'oauth' => [
         'clientId' => env('DRUPAL_OAUTH_CLIENT_ID'),
         'clientSecret' => env('DRUPAL_OAUTH_CLIENT_SECRET'),
