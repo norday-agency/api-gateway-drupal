@@ -338,25 +338,6 @@ class DataService
         }
 
         $contentPath = self::buildContentPath($type, $slug);
-
-        // Route index: when an authoritative index of valid paths exists for this
-        // locale and this detail path isn't in it, the page cannot exist — return
-        // an instant 404 WITHOUT touching Drupal (this is what makes scans cheap).
-        // exists() is only true after a full rebuild, so a not-yet-built index
-        // falls through to the normal Drupal lookup; we never 404 from a missing
-        // index. State is echoed in X-Gateway-Route-Index (miss|hit|bypass).
-        $routeIndexState = 'bypass';
-        if ($slug && config('cms.route_index.enabled', true) && RouteIndex::exists($locale)) {
-            if (! RouteIndex::has($locale, $contentPath)) {
-                return new JsonResponse(
-                    ['statusCode' => 404, 'statusText' => 'Page not found'],
-                    404,
-                    ['X-Gateway-Route-Index' => 'miss']
-                );
-            }
-            $routeIndexState = 'hit';
-        }
-
         $tags = self::tagsForContentType($type, $contentPath);
 
         $cache_id = hash('sha256', implode('.', array_filter([config('app.url'), $locale, $type, $slug, http_build_query($api_request->query())])));
@@ -519,7 +500,7 @@ class DataService
             return new JsonResponse($contents, $contents['statusCode']);
         }
 
-        return new JsonResponse($data, $data['statusCode'], ['X-Gateway-Route-Index' => $routeIndexState]);
+        return new JsonResponse($data, $data['statusCode']);
     }
 
     /**
