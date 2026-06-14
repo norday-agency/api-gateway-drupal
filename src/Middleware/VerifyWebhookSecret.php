@@ -7,13 +7,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Guards the Drupal->gateway webhooks (cache invalidation and route-index
- * upkeep). These control what the site treats as a valid page / what gets
- * flushed, so they must not be callable by just anyone.
+ * Guards the cache-invalidate webhook. That endpoint can wipe the whole cache
+ * (empty body = full flush), so a stray public POST could cold-start the cache
+ * and stampede Drupal — exactly the outage we're avoiding.
  *
  * Compares a shared secret sent in the X-Gateway-Secret header against
  * config('cms.webhook_secret'). If no secret is configured the middleware is a
- * no-op, so existing projects that haven't set one keep working unchanged.
+ * no-op, so existing setups keep working until the secret is set on both sides.
  */
 class VerifyWebhookSecret
 {

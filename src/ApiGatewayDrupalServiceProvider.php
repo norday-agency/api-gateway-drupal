@@ -33,11 +33,5 @@ class ApiGatewayDrupalServiceProvider extends ServiceProvider
             ],
             'ApiGatewayDrupal'
         );
-
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                \IN10\ApiGatewayDrupal\Console\Commands\RebuildRouteIndex::class,
-            ]);
-        }
     }
 }
