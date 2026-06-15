@@ -82,9 +82,9 @@ class DataService
 
             // Instantiate the Guzzle HTTP Client
             if (in_array(config('app.env'), ['local', 'test'])) {
-                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             } else {
-                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             }
 
             // Instantiate the synchronous JSON:API Client
@@ -280,9 +280,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+            $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
         } else {
-            $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+            $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
         }
 
         // Instantiate the synchronous JSON:API Client
@@ -428,9 +428,9 @@ class DataService
 
             // Instantiate the Guzzle HTTP Client
             if (in_array(config('app.env'), ['local', 'test'])) {
-                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             } else {
-                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             }
 
             // Instantiate the synchronous JSON:API Client
@@ -569,9 +569,9 @@ class DataService
 
             // Instantiate the Guzzle HTTP Client
             if (in_array(config('app.env'), ['local', 'test'])) {
-                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             } else {
-                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             }
 
             // Instantiate the synchronous JSON:API Client
@@ -642,9 +642,9 @@ class DataService
 
             // Instantiate the Guzzle HTTP Client
             if (in_array(config('app.env'), ['local', 'test'])) {
-                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             } else {
-                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+                $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
             }
 
             // Instantiate the synchronous JSON:API Client
@@ -719,9 +719,9 @@ class DataService
 
         // Instantiate the Guzzle HTTP Client
         if (in_array(config('app.env'), ['local', 'test'])) {
-            $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => 2, 'timeout' => 5]);
+            $guzzleClient = G7Client::createWithConfig(['verify' => false, 'connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
         } else {
-            $guzzleClient = G7Client::createWithConfig(['connect_timeout' => 2, 'timeout' => 5]);
+            $guzzleClient = G7Client::createWithConfig(['connect_timeout' => config('cms.http.connect_timeout', 2), 'timeout' => config('cms.http.timeout', 5)]);
         }
 
         // Instantiate the synchronous JSON:API Client
