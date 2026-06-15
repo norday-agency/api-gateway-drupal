@@ -23,6 +23,13 @@ return [
     'cache' => [
         'ttl' => (int) env('DRUPAL_CACHE_TTL', 86400),
     ],
+    // Guzzle HTTP client timeouts (in seconds) for upstream Drupal calls.
+    // Defaults preserve the historical 2/5; raise CMS_HTTP_TIMEOUT for slow or
+    // uncached list endpoints (e.g. large JSON:API queries) to avoid cURL 28.
+    'http' => [
+        'connect_timeout' => (int) env('CMS_HTTP_CONNECT_TIMEOUT', 2),
+        'timeout' => (int) env('CMS_HTTP_TIMEOUT', 5),
+    ],
     // Shared secret for the Drupal -> gateway cache-invalidate webhook.
     // When null the guard middleware is a no-op (backwards compatible).
     'webhook_secret' => env('GATEWAY_WEBHOOK_SECRET'),
