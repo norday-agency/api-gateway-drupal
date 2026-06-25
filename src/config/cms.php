@@ -27,7 +27,7 @@ return [
     // Defaults preserve the historical 2/5; raise CMS_HTTP_TIMEOUT for slow or
     // uncached list endpoints (e.g. large JSON:API queries) to avoid cURL 28.
     'http' => [
-        'connect_timeout' => (int) env('CMS_HTTP_CONNECT_TIMEOUT', 2),
+        'connect_timeout' => (int) env('CMS_HTTP_CONNECT_TIMEOUT', 5),
         'timeout' => (int) env('CMS_HTTP_TIMEOUT', 30),
     ],
     // Shared secret for the Drupal -> gateway cache-invalidate webhook.
