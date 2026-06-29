@@ -46,6 +46,12 @@ return [
         'enabled' => filter_var(env('CMS_PUBLISH_DATE_FILTER_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
         'field' => env('CMS_PUBLISH_DATE_FIELD', 'publish_date'),
         'except_types' => [],
+        // Floor the "publish_date <= now" filter value to this window so that all
+        // requests within the window produce an identical upstream query string,
+        // letting Drupal serve the response from its cache. Microsecond-precise
+        // values made every request unique => 100% upstream cache miss. Supported:
+        // 'minute', 'hour', 'day' (anything else falls back to 'hour').
+        'granularity' => env('CMS_PUBLISH_DATE_GRANULARITY', 'hour'),
     ],
     'sort' => [
         'default' => 'title',

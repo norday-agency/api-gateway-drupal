@@ -54,6 +54,35 @@ class DataService
         return [$type, "{$type}:path:{$contentPath}"];
     }
 
+    /**
+     * Value for the "publish_date <= now" filter, floored to a configurable
+     * window (default: the current hour).
+     *
+     * Drupal caches its JSON:API responses keyed on the full request URL. The
+     * previous value, Carbon::now()->toISOString(), carried microsecond
+     * precision, so every request produced a unique URL and therefore a 100%
+     * upstream cache miss — forcing Drupal to cold-render the whole collection
+     * on every call (seconds per request, enough to exceed the HTTP timeout on
+     * large sites). Flooring the value makes it identical for every request in
+     * the window, restoring upstream cache hits, while preserving the
+     * "only already-published content" semantics: the worst case is that a
+     * freshly-published item becomes visible at the next window boundary.
+     */
+    protected static function publishDateFilterValue(): string
+    {
+        $now = Carbon::now();
+
+        switch (config('cms.publish_date_filter.granularity', 'hour')) {
+            case 'minute':
+                return $now->startOfMinute()->toISOString();
+            case 'day':
+                return $now->startOfDay()->toISOString();
+            case 'hour':
+            default:
+                return $now->startOfHour()->toISOString();
+        }
+    }
+
     public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
@@ -373,7 +402,7 @@ class DataService
                     'condition' => [
                         'path' => config('cms.publish_date_filter.field', 'publish_date'),
                         'operator' => '<=',
-                        'value' => Carbon::now()->toISOString(),
+                        'value' => self::publishDateFilterValue(),
                     ],
                 ];
             }
@@ -697,7 +726,7 @@ class DataService
                     'condition' => [
                         'path' => 'publish_date',
                         'operator' => '<=',
-                        'value' => Carbon::now()->toISOString(),
+                        'value' => self::publishDateFilterValue(),
                     ],
                 ],
             ],
