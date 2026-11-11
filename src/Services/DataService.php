@@ -83,6 +83,29 @@ class DataService
         }
     }
 
+    /**
+     * ?limit= when it is between 1 and cms.pagination.max_limit, otherwise cms.pagination.limit.
+     */
+    protected static function pageLimit(Request $api_request): int
+    {
+        $limit = $api_request->query('limit');
+
+        if (!is_string($limit) || !ctype_digit($limit) || (int) $limit < 1 || (int) $limit > (int) config('cms.pagination.max_limit', 48)) {
+            return (int) config('cms.pagination.limit', 12);
+        }
+
+        return (int) $limit;
+    }
+
+    protected static function pagination(int $page, int $limit, $document): array
+    {
+        return [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $document->hasMeta() ? (int) $document->meta()['count'] : null,
+        ];
+    }
+
     public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
@@ -394,7 +417,7 @@ class DataService
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
             $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get('page') : 1;
-            $page_limit = (int) config('cms.pagination.limit');
+            $page_limit = self::pageLimit($api_request);
 
             $query = [
                 'page' => [
@@ -505,6 +528,17 @@ class DataService
                 $hydrator = new ClassDocumentHydrator();
                 $hydratedData = $hydrator->hydrate($response->document());
 
+                $is_list = !$slug && !in_array($type, config('cms.noPagination', []));
+
+                if (empty($hydratedData) && $is_list && config('cms.pagination.empty_page_ok', false)) {
+                    return [
+                        'data' => [],
+                        'pagination' => self::pagination($page, $page_limit, $response->document()),
+                        'statusCode' => 200,
+                        'statusText' => 'OK',
+                    ];
+                }
+
                 if (empty($hydratedData)) {
                     $data['statusCode'] = 404;
                     $data['statusText'] = 'Page not found';
@@ -512,20 +546,13 @@ class DataService
                     return $data;
                 }
 
-                if ($slug || in_array($type, config('cms.noPagination', []))) {
+                if (!$is_list) {
                     // Set content-type detail based on type and slug
                     $data['data'] = ($peek_drupal) ? $hydratedData[0] : new $resource($hydratedData[0], true);
                 } else {
                     // Set content-type collection
                     $data['data'] = ($peek_drupal) ? $hydratedData : $resource::collection($hydratedData);
-
-                    // Set paging properties
-                    $data['pagination'] = [
-                        'page' => $page,
-                        'limit' => $page_limit,
-                        'total' => $response->document()->hasMeta() ? (int) $response->document()->meta(
-                        )['count'] : null,
-                    ];
+                    $data['pagination'] = self::pagination($page, $page_limit, $response->document());
                 }
             } else {
                 $data['data'] = 'Incorrect data received';

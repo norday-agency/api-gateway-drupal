@@ -89,3 +89,10 @@ const stories = await cmsGet('verhalen', 'nl', { include: 'header_image.image.im
 
 The gateway gets it from Drupal (`drupal_laravel_cache` 2.3+, `GET /{locale}/gateway/includes`) and caches it for `cms.cache.ttl` with the tag `includes`. Without that endpoint `?include` is ignored, Drupal's default includes apply, and `GET /admin/v1.0/includes` returns a 503.
 
+## Pagination
+
+Lists take `?page=n` and `?limit=n`. A `limit` between 1 and `cms.pagination.max_limit` (default 48, `CMS_PAGINATION_MAX_LIMIT`) is used; anything else falls back to `cms.pagination.limit`.
+
+A page past the last item returns a 404. Set `cms.pagination.empty_page_ok` to `true` (`CMS_PAGINATION_EMPTY_PAGE_OK`) to get a 200 with `data: []` and the `pagination` block instead.
+
+If your project published `config/cms.php` with its own `pagination` array, add `max_limit` and `empty_page_ok` there: the package defaults do not merge into a published array.
