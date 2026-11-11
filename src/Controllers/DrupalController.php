@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use IN10\ApiGatewayDrupal\Services\DataService;
+use IN10\ApiGatewayDrupal\Services\IncludeService;
 
 class DrupalController extends Controller
 {
@@ -64,6 +65,20 @@ class DrupalController extends Controller
     /**
      * Load drupal complete sitemap based on .env vars
      */
+    public function getIncludes(): JsonResponse
+    {
+        $all = IncludeService::all();
+
+        if ($all === null) {
+            return new JsonResponse(['data' => null, 'statusCode' => 503, 'statusText' => 'Includes not available'], 503);
+        }
+
+        $types = array_filter(array_keys(config('cms.types', [])), fn ($type) => isset($all[$type]));
+        $includes = array_combine($types, array_map(fn ($type) => $all[$type], $types));
+
+        return new JsonResponse(['data' => $includes, 'statusCode' => 200, 'statusText' => 'OK']);
+    }
+
     public function getSitemap(Request $request)
     {
         // Try to get sitemap from S3 bucket first

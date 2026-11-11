@@ -19,6 +19,10 @@ return [
     ],
     'pagination' => [
         'limit' => (int) env('CMS_PAGINATION_LIMIT', env('DRUPAL_PAGINATION_LIMIT', 12)),
+        // Highest ?limit= a frontend may ask for.
+        'max_limit' => (int) env('CMS_PAGINATION_MAX_LIMIT', 48),
+        // A list page without items returns 200 with data: [] instead of a 404.
+        'empty_page_ok' => filter_var(env('CMS_PAGINATION_EMPTY_PAGE_OK', false), FILTER_VALIDATE_BOOLEAN),
     ],
     'cache' => [
         'ttl' => (int) env('DRUPAL_CACHE_TTL', 86400),

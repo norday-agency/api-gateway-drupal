@@ -7,6 +7,9 @@ Route::post('cache/invalidate', 'IN10\ApiGatewayDrupal\Controllers\CacheControll
 // Sitemap
 Route::get('/sitemap', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getSitemap')->name('api-gateway-drupal::sitemap');
 
+// Include paths the frontend may pass as ?include=, per content type
+Route::get('includes', 'IN10\ApiGatewayDrupal\Controllers\DrupalController@getIncludes')->name('api-gateway-drupal::includes');
+
 Route::group(
     [
         'prefix' => '{locale}',
