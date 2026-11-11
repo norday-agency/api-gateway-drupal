@@ -366,11 +366,31 @@ class DataService
             return $redirect;
         }
 
+        $include = null;
+        if ($api_request->has('include')) {
+            $requested = IncludeService::parse($api_request->query('include'));
+            $allowed = IncludeService::forType($type);
+
+            // Without a list from Drupal the include is ignored and Drupal's default includes apply.
+            if ($allowed !== null) {
+                $invalid = IncludeService::invalid($requested, $allowed);
+                if ($invalid) {
+                    return new JsonResponse([
+                        'data' => ['invalid' => $invalid, 'allowed' => $allowed],
+                        'statusCode' => 400,
+                        'statusText' => 'Invalid include',
+                    ], 400);
+                }
+
+                $include = implode(',', $requested);
+            }
+        }
+
         $contentPath = self::buildContentPath($type, $slug);
         $tags = self::tagsForContentType($type, $contentPath);
 
         $cache_id = hash('sha256', implode('.', array_filter([config('app.url'), $locale, $type, $slug, http_build_query($api_request->query())])));
-        $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
+        $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug, $include) {
             $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
 
             $page = ($api_request->has('page') && is_numeric($api_request->get('page'))) ? (int) $api_request->get('page') : 1;
@@ -441,6 +461,11 @@ class DataService
                 }
 
                 $query['sort'] = '-sticky,-publish_date,title';
+            }
+
+            // An empty include tells Drupal to skip its default includes.
+            if ($include !== null) {
+                $query['include'] = $include;
             }
 
             $query = http_build_query($query);
