@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use WoohooLabs\Yang\JsonApi\Client\JsonApiClient;
 use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
@@ -106,6 +107,15 @@ class DataService
         ];
     }
 
+    /**
+     * Logs a failed Drupal response. The log channels of the application
+     * decide where it ends up, such as an error tracker.
+     */
+    protected static function logDrupalError(int $statusCode, string $statusText): void
+    {
+        Log::error('Drupal Error: ' . $statusCode . ' ' . $statusText);
+    }
+
     public static function getParagraphType(Request $api_request, string $locale, string $id) // : ?AnonymousResourceCollection
     {
         $cache_id = hash('sha256', implode('.', array_filter([$locale, 'paragraph', $id])));
@@ -155,8 +165,8 @@ class DataService
                 }
 
                 return $hydratedData[0];
-            } elseif (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            } else {
+                self::logDrupalError($response->getStatusCode(), $response->getReasonPhrase());
             }
 
             return null;
@@ -296,8 +306,8 @@ class DataService
             $data['statusCode'] = $response->getStatusCode();
             $data['statusText'] = $response->getReasonPhrase();
 
-            if ($response->getStatusCode() !== 200 && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            if ($response->getStatusCode() !== 200) {
+                self::logDrupalError($response->getStatusCode(), $response->getReasonPhrase());
             }
 
             return $data;
@@ -555,8 +565,8 @@ class DataService
             $data['statusCode'] = $response->getStatusCode();
             $data['statusText'] = $response->getReasonPhrase();
 
-            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $data['statusCode'], $data['statusText']);
+            if (!$response->isSuccessfulDocument([200, 202])) {
+                self::logDrupalError($data['statusCode'], $data['statusText']);
             }
 
             return $data;
@@ -682,8 +692,8 @@ class DataService
                 return $data;
             }
 
-            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            if (!$response->isSuccessfulDocument([200, 202])) {
+                self::logDrupalError($response->getStatusCode(), $response->getReasonPhrase());
             }
 
             return null;
@@ -742,8 +752,8 @@ class DataService
                 return $resource::collection($hydratedData);
             }
 
-            if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            if (!$response->isSuccessfulDocument([200, 202])) {
+                self::logDrupalError($response->getStatusCode(), $response->getReasonPhrase());
             }
 
             return null;
@@ -825,8 +835,8 @@ class DataService
         //     return $translation;
         // }, [$type]);
 
-        if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-            \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+        if (!$response->isSuccessfulDocument([200, 202])) {
+            self::logDrupalError($response->getStatusCode(), $response->getReasonPhrase());
         }
 
         return null;
