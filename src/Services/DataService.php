@@ -16,6 +16,10 @@ use WoohooLabs\Yang\JsonApi\Hydrator\ClassDocumentHydrator;
 
 class DataService
 {
+    // Same lifetime as TranslationService: a new or removed translation shows
+    // up in the language switch within the hour.
+    protected const TRANSLATION_CACHE_TTL = 3600;
+
     /**
      * Build the canonical content path that mirrors the Drupal field_path filter.
      * Returns null for index/list requests (no slug).
@@ -753,16 +757,38 @@ class DataService
     }
 
     /**
-     * Call Drupal JSON API for translated node data
+     * Path of a node's translation in the given language, or null when the
+     * node has no translation in that language.
      *
-     * @return array|null
+     * Resources call this for every detail response, once per other language,
+     * so the answer is cached. "No translation" is cached too, because that is
+     * the answer for most nodes. A failed Drupal call is not cached.
      */
     public static function getTranslation(string $locale, string $type, int $nid): ?string
     {
-        // $cache_id = hash('sha256', implode('.', array_filter([$locale, $type, $slug, http_build_query($api_request->query())])));
-        // $data = CacheContent::remember($cache_id, function () use ($api_request, $locale, $type, $slug) {
-        // $peek_drupal = ($api_request->has('peek') && $api_request->get('peek') == 'drupal');
+        $cacheId = hash('sha256', implode('.', ['translation', $locale, $type, $nid]));
 
+        $lookup = CacheContent::remember(
+            $cacheId,
+            function () use ($locale, $type, $nid) {
+                return self::resolveTranslation($locale, $type, $nid);
+            },
+            ['translations', $type],
+            self::TRANSLATION_CACHE_TTL
+        );
+
+        return $lookup['path'];
+    }
+
+    /**
+     * Call Drupal JSON API for translated node data.
+     *
+     * The statusCode tells CacheContent whether the answer may be cached.
+     *
+     * @return array{path: ?string, statusCode: int}
+     */
+    protected static function resolveTranslation(string $locale, string $type, int $nid): array
+    {
         $query = [
             'filter' => [
                 'langcode' => [
@@ -818,17 +844,21 @@ class DataService
             $hydratedData = $hydrator->hydrate($response->document());
 
             if (!empty($hydratedData)) {
-                return '/' . $hydratedData[0]->langcode . $hydratedData[0]->slug; // new $resource($hydratedData[0]);
+                return [
+                    'path' => '/' . $hydratedData[0]->langcode . $hydratedData[0]->slug,
+                    'statusCode' => 200,
+                ];
             }
         }
 
-        //     return $translation;
-        // }, [$type]);
+        if (!$response->isSuccessfulDocument([200, 202])) {
+            if (class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
+                \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            }
 
-        if (!$response->isSuccessfulDocument([200, 202]) && class_exists('\Bugsnag\BugsnagLaravel\Facades\Bugsnag')) {
-            \Bugsnag\BugsnagLaravel\Facades\Bugsnag::notifyError('Drupal Error: ' . $response->getStatusCode(), $response->getReasonPhrase());
+            return ['path' => null, 'statusCode' => 502];
         }
 
-        return null;
+        return ['path' => null, 'statusCode' => 200];
     }
 }
